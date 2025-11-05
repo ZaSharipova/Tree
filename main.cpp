@@ -5,21 +5,20 @@
 
 int main(void) {
 
-    TreeNode_t node0 = {};
-    NodeCtor(&node0, NULL);
+    Tree_t tree = {};
+    TreeCtor(&tree);
+    InsertTree(&tree, 10);
+    InsertTree(&tree, 5);
+    InsertTree(&tree, 3);
+    InsertTree(&tree, 7);
+    InsertTree(&tree, 20);
+    InsertTree(&tree, 15);
+    InsertTree(&tree, 13);
+    InsertTree(&tree, 16);
+    InsertTree(&tree, 6);
 
-    TreeNode_t node1 = {};
-    NodeCtor(&node1, 10);
+    PrintSortedNode(tree.root);
 
-    TreeNode_t node2 = {};
-    NodeCtor(&node2, 20);
-
-    TreeNode_t node3 = {};
-    NodeCtor(&node3, 15);
-
-    TreeNode_t node4 = {};
-    NodeCtor(&node4, 5);
-
-    
+    TreeDtor(&tree);
     return 0;
 }

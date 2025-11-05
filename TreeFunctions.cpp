@@ -7,23 +7,31 @@
 
 #define CHECK_ERROR_RETURN(cond) \
     err = cond;                  \
-    if (err != kSuccess) {       \ 
+    if (err != kSuccess) {       \
         return err;              \
     }              
 
-TreeErrors NodeCtor(TreeNode_t *node, TreeElem_t value) {
-    //assert(node);
+TreeErrors TreeCtor(Tree_t *tree) {
+    assert(tree);
 
-    TreeNode_t *node_ptr = (TreeNode_t *) calloc (1, sizeof(TreeNode_t));
-    if (!node_ptr) {
+    tree->root = NULL;
+    tree->size = 0;
+
+    return kSuccess;
+}
+
+TreeErrors NodeCtor(TreeNode_t **node, TreeElem_t value) {
+    assert(node);
+
+    *node = (TreeNode_t *) calloc(1, sizeof(TreeNode_t));
+    if (!*node) {
         fprintf(stderr, "No memory to calloc NODE.\n");
         return kNoMemory;
     }
 
-    node = node_ptr;
-    node->data = value;
-    node->left = NULL;
-    node->right = NULL;
+    (*node)->data = value;
+    (*node)->left = NULL;
+    (*node)->right = NULL;
 
     return kSuccess;
 }
@@ -31,7 +39,18 @@ TreeErrors NodeCtor(TreeNode_t *node, TreeElem_t value) {
 TreeErrors NodeDtor(TreeNode_t *node) {
     assert(node);
 
-    free(node); //??????
+    free(node); 
+    node = NULL;
+
+    return kSuccess;
+}
+
+TreeErrors TreeDtor(Tree_t *tree) {
+    assert(tree);
+
+    DeleteNode(tree->root);
+    tree->root = NULL;
+    tree->size = NULL;
 
     return kSuccess;
 }
@@ -47,8 +66,6 @@ void PrintNode(const TreeNode_t *node) {
         PrintNode(node->left);
     }
 
-    printf("%d ", node->data);
-
     if (node->right) {
         PrintNode(node->right);
     }
@@ -60,6 +77,8 @@ void PrintNode(const TreeNode_t *node) {
 void PrintSortedNode(const TreeNode_t *node) {
     assert(node);
 
+    printf("( ");
+
     if (node->left) {
         PrintSortedNode(node->left);
     }
@@ -69,40 +88,78 @@ void PrintSortedNode(const TreeNode_t *node) {
     if (node->right) {
         PrintSortedNode(node->right);
     }
+
+    printf(") ");
+}
+
+TreeErrors InsertTree(Tree_t *tree, TreeElem_t value) {
+    assert(tree);
+    
+    if (tree->root == NULL) {
+        TreeNode_t *new_node = NULL;
+        TreeErrors err = NodeCtor(&new_node, value);
+        if (err != kSuccess) {
+            return err;
+        }
+        
+        tree->root = new_node;
+        tree->size++;
+
+    } else {
+        return InsertNode(tree->root, value);
+    }
+    
+    return kSuccess;
 }
 
 TreeErrors InsertNode(TreeNode_t *parent_node, TreeElem_t value) {
     assert(parent_node);
-    assert(value);
-
-    TreeErrors err = kSuccess;
-
-    if (parent_node->data <= value) {
-        if (parent_node->left) {
-            CHECK_ERROR_RETURN(InsertNode(parent_node->left, value));
-
-        } else {
-            TreeNode_t node_new = {};
-            CHECK_ERROR_RETURN(NodeCtor(&node_new, value));
-            parent_node->left = &node_new;
-        }
-
-    } else {
+    
+    TreeNode_t *new_node = NULL;
+    TreeErrors err = NodeCtor(&new_node, value);
+    if (err != kSuccess) return err;
+    
+    if (value > parent_node->data) {
         if (parent_node->right) {
-            CHECK_ERROR_RETURN(InsertNode(parent_node->right, value));
+            return InsertNode(parent_node->right, value);
 
         } else {
-            TreeNode_t node_new = {};
-            CHECK_ERROR_RETURN(NodeCtor(&node_new, value));
-            parent_node->right = &node_new;
+            parent_node->right = new_node;
+        }
+    } else {
+        if (parent_node->left) {
+            return InsertNode(parent_node->left, value);
+        } else {
+            parent_node->left = new_node;
         }
     }
-
+    
     return kSuccess;
 }
 
 TreeErrors TreeVerify(const TreeNode_t *node) {
     assert(node);
 
+    if (node == NULL) {
+        return kNodeNullPointer;
+    }
 
+    return kSuccess;
+}
+
+TreeErrors DeleteNode(TreeNode_t *node) {
+    if (!node)
+        return kSuccess;
+
+    if (node->left) {
+        DeleteNode(node->left);
+    }
+
+    if (node->right) {
+        DeleteNode(node->right);
+    }
+
+    free(node);
+
+    return kSuccess;
 }

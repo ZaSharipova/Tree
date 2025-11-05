@@ -4,15 +4,20 @@
 typedef int TreeElem_t;
 
 struct TreeNode_t {
-    TreeNode_t *root;
     TreeElem_t data;
     TreeNode_t *left;
     TreeNode_t *right;
 };
 
+struct Tree_t {
+    TreeNode_t *root;
+    size_t size;
+};
+
 enum TreeErrors {
     kSuccess,
     kNoMemory,
+    kNodeNullPointer,
 };
 
 #endif //ENUMS_H_
