@@ -13,8 +13,8 @@ void PrintDotNode(FILE *file, const TreeNode_t *node) {
     fprintf(file, "    \"1\" [label = \"ROOT\"; shape=rect; fillcolor=pink]");
     fprintf(file, "    \"%p\" [ label=\"{Addr: %p | Data: " TREE_SPEC" | {Left:  %p | Right: %p}}\"; shape=Mrecord; color=black];\n", 
             (void *)node, (void *)node, node->data, 
-            (!node->left) ? NULL : (void *)node->left, 
-            (!node->right) ? NULL : (void *)node->right);
+            (void *)node->left, 
+            (void *)node->right);
     
     if (cnt < 1) {
         fprintf(file, " \"1\" -> \"%p\" ", (void *)node);

@@ -29,9 +29,9 @@ TreeErrors NodeCtor(TreeNode_t **node, TreeElem_t *value) {
         return kNoMemory;
     }
 
-    (*node)->data = value;
-    (*node)->left = NULL;
-    (*node)->right = NULL;
+    (*node)->data = *value;
+    (*node)->left =  NULL;
+    (*node)->right =  NULL;
 
     return kSuccess;
 }
@@ -40,7 +40,7 @@ TreeErrors NodeDtor(TreeNode_t *node) {
     assert(node);
 
     free(node); 
-    node = NULL;
+    node =  NULL;
 
     return kSuccess;
 }
@@ -49,7 +49,7 @@ TreeErrors TreeDtor(Tree_t *tree) {
     assert(tree);
 
     DeleteNode(tree->root);
-    tree->root = NULL;
+    tree->root =  NULL;
     tree->size = NULL;
 
     return kSuccess;
@@ -95,8 +95,8 @@ void PrintSortedNode(const TreeNode_t *node) {
 TreeErrors InsertTree(Tree_t *tree, TreeElem_t *value) {
     assert(tree);
     
-    if (tree->root == NULL) {
-        TreeNode_t *new_node = NULL;
+    if (tree->root ==  NULL) {
+        TreeNode_t *new_node =  NULL;
         TreeErrors err = NodeCtor(&new_node, value);
         if (err != kSuccess) {
             return err;
@@ -106,30 +106,38 @@ TreeErrors InsertTree(Tree_t *tree, TreeElem_t *value) {
         tree->size++;
 
     } else {
-        return InsertNodeChar(tree->root, value);
+        return InsertNode(tree->root, value);
     }
     
     return kSuccess;
 }
 
-TreeErrors InsertNodeChar(TreeNode_t *parent_node, TreeElem_t *value) {
+bool CompareNodes(TreeElem_t parent_value, TreeElem_t children_value) {
+    assert(parent_value);
+    assert(children_value);
+
+    return (children_value - parent_value > 0);
+    // return (atoi(children_value) - atoi(parent_value) > 0);
+}
+
+TreeErrors InsertNode(TreeNode_t *parent_node, TreeElem_t *value) {
     assert(parent_node);
     assert(value);
     
-    TreeNode_t *new_node = NULL;
+    TreeNode_t *new_node =  NULL;
     TreeErrors err = NodeCtor(&new_node, value);
     if (err != kSuccess) return err;
     
-    if (atoi(value) > atoi(parent_node->data)) {
+    if (CompareNodes(parent_node->data, *value)) {
         if (parent_node->right) {
-            return InsertNodeChar(parent_node->right, value);
+            return InsertNode(parent_node->right, value);
 
         } else {
             parent_node->right = new_node;
         }
     } else {
         if (parent_node->left) {
-            return InsertNodeChar(parent_node->left, value);
+            return InsertNode(parent_node->left, value);
         } else {
             parent_node->left = new_node;
         }
@@ -166,7 +174,7 @@ TreeErrors InsertNodeChar(TreeNode_t *parent_node, TreeElem_t *value) {
 TreeErrors TreeVerify(const TreeNode_t *node) {
     assert(node);
 
-    if (node == NULL) {
+    if (node ==  NULL) {
         return kNodeNullPointer;
     }
 
