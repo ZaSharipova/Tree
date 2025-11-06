@@ -5,6 +5,10 @@
 
 #include "Enums.h"
 
+#define INSERT_TO_TREE(value) \
+    number = value; \
+    InsertTree(&tree, &number);
+    
 TreeErrors TreeCtor(Tree_t *tree);
 TreeErrors NodeCtor(TreeNode_t **node, TreeElem_t *value);
 

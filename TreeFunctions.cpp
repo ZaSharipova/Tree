@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <assert.h>
+#include <string.h>
 
 #include "Enums.h"
 
@@ -116,8 +117,10 @@ bool CompareNodes(TreeElem_t parent_value, TreeElem_t children_value) {
     assert(parent_value);
     assert(children_value);
 
-    return (children_value - parent_value > 0);
-    // return (atoi(children_value) - atoi(parent_value) > 0);
+    if (strcmp(TREE_SPEC, "%d") == 0) {
+        return (children_value - parent_value > 0);
+    }
+    return (atoi((const char *)children_value) - atoi((const char *)parent_value) > 0);
 }
 
 TreeErrors InsertNode(TreeNode_t *parent_node, TreeElem_t *value) {
