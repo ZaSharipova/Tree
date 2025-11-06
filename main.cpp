@@ -2,21 +2,32 @@
 
 #include "TreeFunctions.h"
 #include "Enums.h"
+#include "TreeGraph.h"
 
 int main(void) {
 
     Tree_t tree = {};
     TreeCtor(&tree);
-    InsertTree(&tree, 10);
-    InsertTree(&tree, 5);
-    InsertTree(&tree, 3);
-    InsertTree(&tree, 7);
-    InsertTree(&tree, 20);
-    InsertTree(&tree, 15);
-    InsertTree(&tree, 13);
-    InsertTree(&tree, 16);
-    InsertTree(&tree, 6);
+    const char *number = "10";
+    InsertTree(&tree, number);
+    number = "5";
+    InsertTree(&tree, number);
+    number = "3";
+    InsertTree(&tree, number);
+    number = "5";
+    InsertTree(&tree, number);
+    number = "7";
+    InsertTree(&tree, number);
+    number = "15";
+    InsertTree(&tree, number);
+    number = "13";
+    InsertTree(&tree, number);
+    number = "16";
+    InsertTree(&tree, number);
+    number = "6";
+    InsertTree(&tree, number);
 
+    WriteTreeToDotFile(&tree, "output.txt");
     PrintSortedNode(tree.root);
 
     TreeDtor(&tree);

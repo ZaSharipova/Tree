@@ -20,7 +20,7 @@ TreeErrors TreeCtor(Tree_t *tree) {
     return kSuccess;
 }
 
-TreeErrors NodeCtor(TreeNode_t **node, TreeElem_t value) {
+TreeErrors NodeCtor(TreeNode_t **node, TreeElem_t *value) {
     assert(node);
 
     *node = (TreeNode_t *) calloc(1, sizeof(TreeNode_t));
@@ -60,7 +60,7 @@ void PrintNode(const TreeNode_t *node) {
 
     printf("( ");
 
-    printf("%d ", node->data);
+    printf("" TREE_SPEC " ", node->data);
 
     if (node->left) {
         PrintNode(node->left);
@@ -83,7 +83,7 @@ void PrintSortedNode(const TreeNode_t *node) {
         PrintSortedNode(node->left);
     }
 
-    printf("%d ", node->data);
+    printf(" " TREE_SPEC" ", node->data);
 
     if (node->right) {
         PrintSortedNode(node->right);
@@ -92,7 +92,7 @@ void PrintSortedNode(const TreeNode_t *node) {
     printf(") ");
 }
 
-TreeErrors InsertTree(Tree_t *tree, TreeElem_t value) {
+TreeErrors InsertTree(Tree_t *tree, TreeElem_t *value) {
     assert(tree);
     
     if (tree->root == NULL) {
@@ -106,29 +106,30 @@ TreeErrors InsertTree(Tree_t *tree, TreeElem_t value) {
         tree->size++;
 
     } else {
-        return InsertNode(tree->root, value);
+        return InsertNodeChar(tree->root, value);
     }
     
     return kSuccess;
 }
 
-TreeErrors InsertNode(TreeNode_t *parent_node, TreeElem_t value) {
+TreeErrors InsertNodeChar(TreeNode_t *parent_node, TreeElem_t *value) {
     assert(parent_node);
+    assert(value);
     
     TreeNode_t *new_node = NULL;
     TreeErrors err = NodeCtor(&new_node, value);
     if (err != kSuccess) return err;
     
-    if (value > parent_node->data) {
+    if (atoi(value) > atoi(parent_node->data)) {
         if (parent_node->right) {
-            return InsertNode(parent_node->right, value);
+            return InsertNodeChar(parent_node->right, value);
 
         } else {
             parent_node->right = new_node;
         }
     } else {
         if (parent_node->left) {
-            return InsertNode(parent_node->left, value);
+            return InsertNodeChar(parent_node->left, value);
         } else {
             parent_node->left = new_node;
         }
@@ -136,6 +137,31 @@ TreeErrors InsertNode(TreeNode_t *parent_node, TreeElem_t value) {
     
     return kSuccess;
 }
+
+// TreeErrors InsertNode(TreeNode_t *parent_node, TreeElem_t value) {
+//     assert(parent_node);
+    
+//     TreeNode_t *new_node = NULL;
+//     TreeErrors err = NodeCtor(&new_node, value);
+//     if (err != kSuccess) return err;
+    
+//     if (value > parent_node->data) {
+//         if (parent_node->right) {
+//             return InsertNode(parent_node->right, value);
+
+//         } else {
+//             parent_node->right = new_node;
+//         }
+//     } else {
+//         if (parent_node->left) {
+//             return InsertNode(parent_node->left, value);
+//         } else {
+//             parent_node->left = new_node;
+//         }
+//     }
+    
+//     return kSuccess;
+// }
 
 TreeErrors TreeVerify(const TreeNode_t *node) {
     assert(node);

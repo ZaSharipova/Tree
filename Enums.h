@@ -1,10 +1,11 @@
 #ifndef ENUMS_H_
 #define ENUMS_H_
 
-typedef int TreeElem_t;
+typedef const char TreeElem_t;
+#define TREE_SPEC "%s"
 
 struct TreeNode_t {
-    TreeElem_t data;
+    TreeElem_t *data;
     TreeNode_t *left;
     TreeNode_t *right;
 };
