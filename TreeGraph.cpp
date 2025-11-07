@@ -13,8 +13,8 @@ void PrintDotNode(FILE *file, const TreeNode_t *node) {
     fprintf(file, "    \"1\" [label = \"ROOT\"; shape=rect; fillcolor=pink]");
     fprintf(file, "    \"%p\" [ label=\"{Addr: %p | Data: " TREE_SPEC" | {Left:  %p | Right: %p}}\"; shape=Mrecord; color=black];\n", 
             (void *)node, (void *)node, node->data, 
-            (void *)node->left, 
-            (void *)node->right);
+            node->left, 
+            node->right);
     
     if (cnt < 1) {
         fprintf(file, " \"1\" -> \"%p\" ", (void *)node);
@@ -46,6 +46,9 @@ void WriteTreeToDotFile(const Tree_t *tree, const char *filename) {
     fprintf(file, "    rankdir=TB;\n");
     fprintf(file, "    node [shape=record, style=filled, fillcolor=lightblue];\n");
     fprintf(file, "    edge [fontsize=10];\n\n");
+    fprintf(file, "    graph [fontname=\"Arial\"];\n");      // Устанавливаем шрифт для графа
+    fprintf(file, "    node [fontname=\"Arial\"];\n");       // Устанавливаем шрифт для узлов
+    fprintf(file, "    edge [fontname=\"Arial\"];\n");      
 
     if (tree->root) {
         PrintDotNode(file, tree->root);
@@ -57,5 +60,5 @@ void WriteTreeToDotFile(const Tree_t *tree, const char *filename) {
 
     fclose(file);
 
-    system("dot " FILE_OUT" -T svg -o image.svg");
+    system("dot " FILE_OUT" -T svg -o image.svg ");
 }

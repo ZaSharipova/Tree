@@ -1,8 +1,8 @@
 #ifndef ENUMS_H_
 #define ENUMS_H_
 
-typedef int TreeElem_t;
-#define TREE_SPEC "%d"
+typedef const char* TreeElem_t;
+#define TREE_SPEC "%s"
 
 #define FILE_OUT "output.txt"
 
@@ -17,10 +17,11 @@ struct Tree_t {
     size_t size;
 };
 
-enum TreeErrors {
+enum TreeErrors{
     kSuccess,
     kNoMemory,
     kNodeNullPointer,
+    kBadTree,
 };
 
 #endif //ENUMS_H_

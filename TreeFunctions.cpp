@@ -17,6 +17,7 @@ TreeErrors TreeRootCtor(Tree_t *tree) {
 
 TreeErrors NodeCtor(TreeNode_t **node, TreeElem_t *value) {
     assert(node);
+    //assert(value);
 
     *node = (TreeNode_t *) calloc(1, sizeof(TreeNode_t));
     if (!*node) {
@@ -24,7 +25,11 @@ TreeErrors NodeCtor(TreeNode_t **node, TreeElem_t *value) {
         return kNoMemory;
     }
 
-    (*node)->data = *value;
+    if (value && *value) {
+        (*node)->data = *value; 
+    } else {
+        (*node)->data = NULL;
+    }
     (*node)->left =  NULL;
     (*node)->right =  NULL;
 
@@ -51,7 +56,6 @@ TreeErrors TreeDtor(Tree_t *tree) {
 }
 
 void PrintNodePreOrder(const TreeNode_t *node) {
-
     if (!node) {
         return;
     }
@@ -81,7 +85,6 @@ void PrintNodePostOrder(const TreeNode_t *node) {
 }
 
 void PrintNodeInOrder(const TreeNode_t *node) {
-
     if (!node) {
         return;
     }
@@ -123,8 +126,7 @@ void SortNodeToArray(const TreeNode_t *node, TreeElem_t *arr_after) {
     if (node->left) {
         SortNodeToArray(node->left, arr_after);
     }
-    arr_after[i] = node->data;
-    i++;
+    arr_after[i++] = node->data;
 
     if (node->right) {
         SortNodeToArray(node->right, arr_after);
@@ -133,6 +135,7 @@ void SortNodeToArray(const TreeNode_t *node, TreeElem_t *arr_after) {
 
 TreeErrors InsertTree(Tree_t *tree, TreeElem_t *value) {
     assert(tree);
+    assert(value);
     
     if (tree->root ==  NULL) {
         TreeNode_t *new_node =  NULL;
@@ -152,8 +155,8 @@ TreeErrors InsertTree(Tree_t *tree, TreeElem_t *value) {
 }
 
 bool CompareNodes(TreeElem_t parent_value, TreeElem_t children_value) {
-    assert(parent_value);
-    assert(children_value);
+    // assert(parent_value);
+    // assert(children_value);
 
     if (strcmp(TREE_SPEC, "%d") == 0) {
         return (children_value - parent_value > 0);
@@ -188,12 +191,34 @@ TreeErrors InsertNode(TreeNode_t *parent_node, TreeElem_t *value) {
     return kSuccess;
 }
 
-TreeErrors TreeVerify(const TreeNode_t *node) {
+TreeErrors TreeVerify(const TreeNode_t *head, int size) {
+    assert(head);
+
+    static int nodes_cnt = 1;
+    if (head->left) {
+        nodes_cnt++;
+        TreeVerify(head->left, size);
+    }
+
+    if (head->right) {
+        nodes_cnt++;
+        TreeVerify(head->right, size);
+    }
+
+    if (nodes_cnt < size) {
+        return kBadTree;
+    }
+    return kSuccess;
+}
+
+TreeErrors NodeVerify(const TreeNode_t *node) {
     assert(node);
 
     if (node ==  NULL) {
         return kNodeNullPointer;
     }
+
+
 
     return kSuccess;
 }
@@ -202,13 +227,8 @@ TreeErrors DeleteNode(TreeNode_t *node) {
     if (!node)
         return kSuccess;
 
-    if (node->left) {
-        DeleteNode(node->left);
-    }
-
-    if (node->right) {
-        DeleteNode(node->right);
-    }
+    DeleteNode(node->left);
+    DeleteNode(node->right);
 
     free(node);
 

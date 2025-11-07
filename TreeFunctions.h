@@ -2,14 +2,15 @@
 #define TREE_FUNCTIONS_H_
 
 #include <stdio.h>
+#include <stdbool.h>
 
 #include "Enums.h"
 
 #define MAX_ARR_SIZE 23
 
-#define INSERT_TO_TREE(value) \
-    number = value; \
-    InsertTree(&tree, &number);
+#define INSERT_TO_TREE(val) \
+    value = val; \
+    InsertTree(&tree, &value);
 
 #define CHECK_ERROR_RETURN(cond) \
     err = cond;                  \
@@ -22,6 +23,7 @@ TreeErrors NodeCtor(TreeNode_t **node, TreeElem_t *value);
 
 TreeErrors TreeDtor(Tree_t *tree);
 TreeErrors NodeDtor(TreeNode_t *node);
+TreeErrors TreeVerify(const TreeNode_t *head, int size);
 
 TreeErrors InsertTree(Tree_t *tree, TreeElem_t *value);
 TreeErrors InsertNode(TreeNode_t *parent_node, TreeElem_t *value);
