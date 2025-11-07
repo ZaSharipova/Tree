@@ -54,5 +54,8 @@ void WriteTreeToDotFile(const Tree_t *tree, const char *filename) {
     }
 
     fprintf(file, "}\n");
+
     fclose(file);
+
+    system("dot " FILE_OUT" -T svg -o image.svg");
 }

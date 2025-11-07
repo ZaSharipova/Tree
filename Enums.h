@@ -4,6 +4,8 @@
 typedef int TreeElem_t;
 #define TREE_SPEC "%d"
 
+#define FILE_OUT "output.txt"
+
 struct TreeNode_t {
     TreeElem_t data;
     TreeNode_t *left;

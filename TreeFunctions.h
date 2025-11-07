@@ -11,7 +11,13 @@
     number = value; \
     InsertTree(&tree, &number);
 
-TreeErrors TreeCtor(Tree_t *tree);
+#define CHECK_ERROR_RETURN(cond) \
+    err = cond;                  \
+    if (err != kSuccess) {       \
+        return err;              \
+    }
+
+TreeErrors TreeRootCtor(Tree_t *tree);
 TreeErrors NodeCtor(TreeNode_t **node, TreeElem_t *value);
 
 TreeErrors TreeDtor(Tree_t *tree);
@@ -19,10 +25,20 @@ TreeErrors NodeDtor(TreeNode_t *node);
 
 TreeErrors InsertTree(Tree_t *tree, TreeElem_t *value);
 TreeErrors InsertNode(TreeNode_t *parent_node, TreeElem_t *value);
-void PrintNode(const TreeNode_t *node);
-void PrintSortedNode(const TreeNode_t *node, TreeElem_t *arr_after);
+
+void PrintNodePreOrder(const TreeNode_t *node);
+void PrintNodePostOrder(const TreeNode_t *node);
+void PrintNodeInOrder(const TreeNode_t *node);
+
+void PrintSortedNode(const TreeNode_t *node);
+void SortNodeToArray(const TreeNode_t *node, TreeElem_t *arr_after);
 
 TreeErrors DeleteNode(TreeNode_t *node);
 
 bool CompareNodes(TreeElem_t parent_value, TreeElem_t children_value);
+
+int CheckSorting(TreeElem_t *arr_to_check_with, TreeNode_t *head, TreeElem_t *arr_before, int count);
+
+TreeNode_t *FindNodeAddress(TreeNode_t *head, TreeElem_t *value);
+
 #endif //TREE_FUNCTIONS_H_
