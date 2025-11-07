@@ -75,19 +75,24 @@ void PrintNode(const TreeNode_t *node) {
 
 }
 
-void PrintSortedNode(const TreeNode_t *node) {
+void PrintSortedNode(const TreeNode_t *node, TreeElem_t *arr_after) {
     assert(node);
+
+    static int i = 0;
 
     printf("( ");
 
     if (node->left) {
-        PrintSortedNode(node->left);
+        PrintSortedNode(node->left, arr_after);
     }
 
     printf(" " TREE_SPEC" ", node->data);
+    arr_after[i] = node->data;
+    i++;
+
 
     if (node->right) {
-        PrintSortedNode(node->right);
+        PrintSortedNode(node->right, arr_after);
     }
 
     printf(") ");
@@ -120,6 +125,7 @@ bool CompareNodes(TreeElem_t parent_value, TreeElem_t children_value) {
     if (strcmp(TREE_SPEC, "%d") == 0) {
         return (children_value - parent_value > 0);
     }
+
     return (atoi((const char *)children_value) - atoi((const char *)parent_value) > 0);
 }
 
