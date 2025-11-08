@@ -32,6 +32,7 @@ TreeErrors NodeCtor(TreeNode_t **node, TreeElem_t *value) {
     }
     (*node)->left =  NULL;
     (*node)->right =  NULL;
+    (*node)->parent = NULL;
 
     return kSuccess;
 }
@@ -48,7 +49,9 @@ TreeErrors NodeDtor(TreeNode_t *node) {
 TreeErrors TreeDtor(Tree_t *tree) {
     assert(tree);
 
-    DeleteNode(tree->root);
+    TreeErrors err = kSuccess;
+    CHECK_ERROR_RETURN(DeleteNode(tree->root));
+
     tree->root =  NULL;
     tree->size = NULL;
 
@@ -179,12 +182,14 @@ TreeErrors InsertNode(TreeNode_t *parent_node, TreeElem_t *value) {
 
         } else {
             parent_node->right = new_node;
+            new_node->parent = parent_node;
         }
     } else {
         if (parent_node->left) {
             return InsertNode(parent_node->left, value);
         } else {
             parent_node->left = new_node;
+            new_node->parent = parent_node;
         }
     }
     

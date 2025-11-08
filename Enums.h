@@ -8,6 +8,7 @@ typedef const char* TreeElem_t;
 
 struct TreeNode_t {
     TreeElem_t data;
+    TreeNode_t *parent;
     TreeNode_t *left;
     TreeNode_t *right;
 };
@@ -22,6 +23,7 @@ enum TreeErrors{
     kNoMemory,
     kNodeNullPointer,
     kBadTree,
+    kNoSuchNode,
 };
 
 #endif //ENUMS_H_

@@ -13,28 +13,50 @@
 static bool AskYesNo(const char *question) {
     assert(question);
 
-    char answer[MAX_LINE_SIZE] = {0};
+    char *answer = (char *) calloc (MAX_LINE_SIZE, sizeof(char));
+    if (!answer) {
+        fprintf(stderr, "Ошибка: не удалось выделить память для ответа.\n");
+        return false;
+    }
+
     printf("%s (да/нет): ", question);
     scanf("%29[^\n]", answer);
     getchar();
-    return strncmp(answer, "да", 3) == 0;
+
+    bool result = (strncmp(answer, "да", 3) == 0);
+    free(answer);
+
+    return result;
 }
 
 static bool PlayAgain(void) {
+    char *answer = (char *) calloc (MAX_LINE_SIZE, sizeof(char));
+    if (!answer) {
+        fprintf(stderr, "Ошибка: не удалось выделить память для ответа.\n");
+        return false;
+    }
 
-    char answer[MAX_LINE_SIZE] = {0};
     printf("\nЕсли хотите сыграть еще раз, введите CONT, иначе QUIT:\n");
     scanf("%29[^\n]", answer);
     getchar();
 
-    return strncmp(answer, "CONT", 5) == 0;
+    bool result = (strncmp(answer, "CONT", sizeof("CONT") - 1) == 0);
+    free(answer);
+
+    return result;
 }
 
 static TreeErrors AddNewCharacter(TreeNode_t *node) {
     assert(node);
 
-    char name[MAX_LINE_SIZE] = {0};
-    char new_question[MAX_LINE_SIZE] = {0};
+    char *name = (char *) calloc (MAX_LINE_SIZE, sizeof(char));
+    char *new_question = (char *) calloc (MAX_LINE_SIZE, sizeof(char));
+    if (!name || !new_question) {
+        fprintf(stderr, "Ошибка: не удалось выделить память.\n");
+        free(name);
+        free(new_question);
+        return kNoMemory;
+    }
 
     printf("\nОтветьте тогда, кого Вы загадывали? Введите имя (инициалы, прозвище):\n");
     scanf("%29[^\n]", name);
@@ -44,12 +66,12 @@ static TreeErrors AddNewCharacter(TreeNode_t *node) {
     scanf("%29[^\n]", new_question);
     getchar();
 
-    NodesInsertAtTheEnd(node, strdup(name));
-    //free(node->data);
-    new_question[strlen(new_question)] = '?';
-    node->data = strdup(new_question);
+    NodesInsertAtTheEnd(node, strdup(name), strdup(new_question));
 
     printf("\nХорошо, Акинатор переписан. Теперь в нем есть данный персонаж.\n");
+
+    free(name);
+    free(new_question);
 
     return kSuccess;
 }
@@ -75,17 +97,23 @@ static TreeErrors HandleWrongGuess(TreeNode_t *node, TreeNode_t *head) {
     return kSuccess;
 }
 
-
 TreeErrors Akinator(TreeNode_t *node) {
     assert(node);
 
     static TreeNode_t *head = NULL;
     if (!head) head = node;
 
-    char question[MAX_LINE_SIZE] = {0};
-    snprintf(question, sizeof(question), "\nЭто %s?", node->data);
+    size_t len = strlen(node->data) + 3;
+    char *question = (char *) calloc (len, sizeof(char));
+    if (!question) {
+        fprintf(stderr, "Ошибка: не удалось выделить память для вопроса.\n");
+        return kNoMemory;
+    }
+
+    snprintf(question, len, "\nЭто %s?", node->data);
 
     bool yes = AskYesNo(question);
+    free(question);
 
     if (!node->left && !node->right) {
         if (yes) {
@@ -93,29 +121,27 @@ TreeErrors Akinator(TreeNode_t *node) {
         } else {
             return HandleWrongGuess(node, head);
         }
-
     } else {
         if (yes) {
-            if (node->left) {
+            if (node->left)
                 return Akinator(node->left);
-            } else {
+            else
                 fprintf(stderr, "Ошибка: нет левого узла для ответа 'да'.\n");
-            }
         } else {
-            if (node->right) {
+            if (node->right)
                 return Akinator(node->right);
-            } else {
+            else
                 fprintf(stderr, "Ошибка: нет правого узла для ответа 'нет'.\n");
-            }
         }
     }
 
     return kSuccess;
 }
 
-TreeErrors NodesInsertAtTheEnd(TreeNode_t *node, const char *name) {
+TreeErrors NodesInsertAtTheEnd(TreeNode_t *node, const char *name, char *question) {
     assert(node);
     assert(name);
+    assert(question);
 
     TreeNode_t *new_node_left = NULL;
     NodeCtor(&new_node_left, &name);
@@ -123,18 +149,26 @@ TreeErrors NodesInsertAtTheEnd(TreeNode_t *node, const char *name) {
     TreeNode_t *new_node_right = NULL;
     NodeCtor(&new_node_right, &(node->data));
 
-    node->left = new_node_left;
+    node->left  = new_node_left;
     node->right = new_node_right;
+
+    size_t len = strlen(question);
+    char *new_question = (char *) calloc (len + 2, sizeof(char));
+    if (!new_question) return kNoMemory;
+
+    strcpy(new_question, question);
+    new_question[len] = '?';
+    new_question[len + 1] = '\0';
+
+    node->data = new_question;
 
     return kSuccess;
 }
 
 void DoAskGeneralQuestion(TreeNode_t *node) {
     assert(node);
-
     printf("Это %s?", node->data);
 }
-
 
 void PrintAkinatorToFile(FILE *file, TreeNode_t *node) {
     assert(file);
@@ -142,18 +176,45 @@ void PrintAkinatorToFile(FILE *file, TreeNode_t *node) {
 
     fprintf(file, "( \"%s\"", node->data);
 
-    if (node->left) {
+    if (node->left)
         PrintAkinatorToFile(file, node->left);
-    } else {
+    else
         fprintf(file, " nill");
-    }
 
-    if (node->right) {
+    if (node->right)
         PrintAkinatorToFile(file, node->right);
-    } else {
+    else
         fprintf(file, " nill");
-    }
 
     fprintf(file, " )");
+}
 
+TreeNode_t *FindAkinatorNodeAddress(TreeNode_t *node, const char *value) {
+    assert(node);
+    assert(value);
+
+    if (strcmp(value, node->data) == 0) {
+        return node;
+    } else {
+        if (!node->left) FindAkinatorNodeAddress(node->left, value);
+        if (!node->right) FindAkinatorNodeAddress(node->right, value);
+    }
+    return NULL;
+}
+
+TreeErrors PrintDefinition(TreeNode_t *node, const char *value) {
+    assert(node);
+    assert(value);
+
+    static TreeNode_t *head = node;
+    TreeNode_t *address = FindAkinatorNodeAddress(node, value);
+    if (!address) {
+        return kNoSuchNode;
+    }
+
+    while (node != head) {
+        printf(" %s,", node->data);
+        node = node->parent;
+    }
+    return kSuccess;
 }

@@ -5,7 +5,7 @@
 
 #include "Enums.h"
 
-TreeErrors NodesInsertAtTheEnd(TreeNode_t *node, const char *name);
+TreeErrors NodesInsertAtTheEnd(TreeNode_t *node, const char *name, char *question);
 TreeErrors Akinator(TreeNode_t *node);
 
 void PrintAkinatorToFile(FILE *file, TreeNode_t *node);
