@@ -17,6 +17,8 @@ int main(void) {
     INSERT_TO_TREE("No One knows");
     Akinator(tree.root);
 
+    CHECK_ERROR_RETURN(PrintDefinition(tree.root, "zarina", tree.size));
+
     WriteTreeToDotFile(&tree, FILE_OUT);
     // const char *number = "12";
     // INSERT_TO_TREE("10");

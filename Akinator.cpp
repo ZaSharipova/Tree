@@ -10,68 +10,47 @@
 
 #define MAX_LINE_SIZE 30
 
+
 static bool AskYesNo(const char *question) {
     assert(question);
 
-    char *answer = (char *) calloc (MAX_LINE_SIZE, sizeof(char));
-    if (!answer) {
-        fprintf(stderr, "Ошибка: не удалось выделить память для ответа.\n");
-        return false;
-    }
-
-    printf("%s (да/нет): ", question);
+    char answer[MAX_LINE_SIZE] = {0};
+    printf(YELLOW "%s (да/нет): " RESET, question);
     scanf("%29[^\n]", answer);
     getchar();
-
-    bool result = (strncmp(answer, "да", 3) == 0);
-    free(answer);
-
-    return result;
+    return strncmp(answer, "да", 3) == 0;
 }
 
 static bool PlayAgain(void) {
-    char *answer = (char *) calloc (MAX_LINE_SIZE, sizeof(char));
-    if (!answer) {
-        fprintf(stderr, "Ошибка: не удалось выделить память для ответа.\n");
-        return false;
-    }
 
-    printf("\nЕсли хотите сыграть еще раз, введите CONT, иначе QUIT:\n");
+    char answer[MAX_LINE_SIZE] = {0};
+    printf(GREEN "\nЕсли хотите сыграть еще раз, введите CONT, иначе QUIT:\n" RESET);
     scanf("%29[^\n]", answer);
     getchar();
 
-    bool result = (strncmp(answer, "CONT", sizeof("CONT") - 1) == 0);
-    free(answer);
-
-    return result;
+    return strncmp(answer, "CONT", 5) == 0;
 }
 
 static TreeErrors AddNewCharacter(TreeNode_t *node) {
     assert(node);
 
-    char *name = (char *) calloc (MAX_LINE_SIZE, sizeof(char));
-    char *new_question = (char *) calloc (MAX_LINE_SIZE, sizeof(char));
-    if (!name || !new_question) {
-        fprintf(stderr, "Ошибка: не удалось выделить память.\n");
-        free(name);
-        free(new_question);
-        return kNoMemory;
-    }
+    char name[MAX_LINE_SIZE] = {0};
+    char new_question[MAX_LINE_SIZE] = {0};
 
-    printf("\nОтветьте тогда, кого Вы загадывали? Введите имя (инициалы, прозвище):\n");
+    printf(BLUE "\nОтветьте тогда, кого Вы загадывали? Введите имя (инициалы, прозвище):\n" RESET);
     scanf("%29[^\n]", name);
     getchar();
 
-    printf("\nОтлично! Чем \"%s\" отличается от \"%s\"? Он ... :\n", name, node->data);
+    printf(BLUE "\nОтлично! Чем \"%s\" отличается от \"%s\"? Он ... :\n" RESET, name, node->data);
     scanf("%29[^\n]", new_question);
     getchar();
 
     NodesInsertAtTheEnd(node, strdup(name), strdup(new_question));
+    //free(node->data);
+    // new_question[strlen(new_question)] = '?';
+    // node->data = strdup(new_question);
 
     printf("\nХорошо, Акинатор переписан. Теперь в нем есть данный персонаж.\n");
-
-    free(name);
-    free(new_question);
 
     return kSuccess;
 }
@@ -79,7 +58,7 @@ static TreeErrors AddNewCharacter(TreeNode_t *node) {
 static TreeErrors HandleCorrectGuess(TreeNode_t *head) {
     assert(head);
 
-    printf("\nОтлично, ответ угадан!\n");
+    printf(RED "\nОтлично, ответ угадан!\n" RESET);
     if (PlayAgain()) {
         return Akinator(head);
     }
@@ -97,23 +76,17 @@ static TreeErrors HandleWrongGuess(TreeNode_t *node, TreeNode_t *head) {
     return kSuccess;
 }
 
+
 TreeErrors Akinator(TreeNode_t *node) {
     assert(node);
 
     static TreeNode_t *head = NULL;
     if (!head) head = node;
 
-    size_t len = strlen(node->data) + 3;
-    char *question = (char *) calloc (len, sizeof(char));
-    if (!question) {
-        fprintf(stderr, "Ошибка: не удалось выделить память для вопроса.\n");
-        return kNoMemory;
-    }
-
-    snprintf(question, len, "\nЭто %s?", node->data);
+    char question[MAX_LINE_SIZE] = {0};
+    snprintf(question, sizeof(question), "\nЭто %s?", node->data);
 
     bool yes = AskYesNo(question);
-    free(question);
 
     if (!node->left && !node->right) {
         if (yes) {
@@ -121,17 +94,20 @@ TreeErrors Akinator(TreeNode_t *node) {
         } else {
             return HandleWrongGuess(node, head);
         }
+
     } else {
         if (yes) {
-            if (node->left)
+            if (node->left) {
                 return Akinator(node->left);
-            else
+            } else {
                 fprintf(stderr, "Ошибка: нет левого узла для ответа 'да'.\n");
+            }
         } else {
-            if (node->right)
+            if (node->right) {
                 return Akinator(node->right);
-            else
+            } else {
                 fprintf(stderr, "Ошибка: нет правого узла для ответа 'нет'.\n");
+            }
         }
     }
 
@@ -149,7 +125,7 @@ TreeErrors NodesInsertAtTheEnd(TreeNode_t *node, const char *name, char *questio
     TreeNode_t *new_node_right = NULL;
     NodeCtor(&new_node_right, &(node->data));
 
-    node->left  = new_node_left;
+    node->left = new_node_left;
     node->right = new_node_right;
 
     size_t len = strlen(question);
@@ -157,8 +133,6 @@ TreeErrors NodesInsertAtTheEnd(TreeNode_t *node, const char *name, char *questio
     if (!new_question) return kNoMemory;
 
     strcpy(new_question, question);
-    new_question[len] = '?';
-    new_question[len + 1] = '\0';
 
     node->data = new_question;
 
@@ -167,8 +141,10 @@ TreeErrors NodesInsertAtTheEnd(TreeNode_t *node, const char *name, char *questio
 
 void DoAskGeneralQuestion(TreeNode_t *node) {
     assert(node);
+
     printf("Это %s?", node->data);
 }
+
 
 void PrintAkinatorToFile(FILE *file, TreeNode_t *node) {
     assert(file);
@@ -176,45 +152,94 @@ void PrintAkinatorToFile(FILE *file, TreeNode_t *node) {
 
     fprintf(file, "( \"%s\"", node->data);
 
-    if (node->left)
+    if (node->left) {
         PrintAkinatorToFile(file, node->left);
-    else
+    } else {
         fprintf(file, " nill");
+    }
 
-    if (node->right)
+    if (node->right) {
         PrintAkinatorToFile(file, node->right);
-    else
+    } else {
         fprintf(file, " nill");
+    }
 
     fprintf(file, " )");
+
 }
 
-TreeNode_t *FindAkinatorNodeAddress(TreeNode_t *node, const char *value) {
-    assert(node);
-    assert(value);
-
+TreeErrors FindAkinatorNodeAddress(TreeNode_t *node, const char *value, TreeNode_t **address) {
+    if (!node) return kFailure;
     if (strcmp(value, node->data) == 0) {
-        return node;
-    } else {
-        if (!node->left) FindAkinatorNodeAddress(node->left, value);
-        if (!node->right) FindAkinatorNodeAddress(node->right, value);
+        *address = node;
+        return kSuccess;
     }
-    return NULL;
+    if (node->left) {
+        if (FindAkinatorNodeAddress(node->left, value, address) == kSuccess) return kSuccess;
+    }
+    if (node->right) {
+        if (FindAkinatorNodeAddress(node->right, value, address) == kSuccess) return kSuccess;
+    }
+    return kFailure;
 }
 
-TreeErrors PrintDefinition(TreeNode_t *node, const char *value) {
+
+TreeErrors PrintDefinition(TreeNode_t *node, const char *value, int count) {
     assert(node);
     assert(value);
 
     static TreeNode_t *head = node;
-    TreeNode_t *address = FindAkinatorNodeAddress(node, value);
+    TreeNode_t *address = NULL;
+    FindAkinatorNodeAddress(node, value, &address);
+
     if (!address) {
+        printf("%s address not found.", value);
         return kNoSuchNode;
     }
+    printf("===========DEFINITION===========\n");
+    printf("%s - address: %p\nDefinition: ", value, address);
+
 
     while (node != head) {
-        printf(" %s,", node->data);
+        printf("%s, ", node->data);
         node = node->parent;
     }
+    printf("%s\n", node->data);
+    printf("================================");
     return kSuccess;
+}
+
+TreeErrors CompareResults(TreeNode_t *node, const char *value1, const char *value2, int count) {
+    assert(node);
+    assert(value1);
+    assert(value2);
+
+    static TreeNode_t *head = node;
+
+    TreeNode_t *address1 = NULL;
+    TreeNode_t *address2 = NULL;
+
+    FindAkinatorNodeAddress(node, value1, &address1);
+    if (!address1) {
+        fprintf(stderr, "No address have found.");
+    }
+
+    FindAkinatorNodeAddress(node, value2, &address2);
+    if (!address2) {
+        fprintf(stderr, "No address have found.");
+    }
+    
+    node = head;
+    printf("Схожи в: ");
+    while (node != address1) {
+        printf("%s, ", node->data);
+        node = node->parent;
+    }
+
+    // printf("Различаются в: ");
+    // do {
+    //     printf() ...
+    // } while (node);
+
+
 }
