@@ -9,19 +9,22 @@
 #include "TreeFunctions.h"
 
 #define MAX_LINE_SIZE 30
-
+#define YES_ANSWER "да"
+#define NO_ANSWER "нет"
+#define CONTINUE_ANSWER "CONT"
+#define QUIT_ANSWER "QUIT"
 
 static bool AskYesNo(const char *question) {
     assert(question);
 
     bool flag = false;
     char *answer = (char *) calloc (MAX_LINE_SIZE, sizeof(char));
-    //char answer[MAX_LINE_SIZE] = {0};
-    printf(YELLOW "\nЭто %s ? (да/нет): " RESET, question);
+
+    printf(YELLOW "\nЭто %s ? (" YES_ANSWER"/" NO_ANSWER"): " RESET, question);
     scanf("%29[^\n]", answer);
     getchar();
 
-    flag = strncmp(answer, "да", 3) == 0;
+    flag = strncmp(answer, YES_ANSWER, sizeof(YES_ANSWER)) == 0;
     free(answer);
 
     return flag;
@@ -30,12 +33,13 @@ static bool AskYesNo(const char *question) {
 static bool PlayAgain(void) {
 
     bool flag = false;
-    char *answer = (char *) calloc (MAX_LINE_SIZE, sizeof(answer));
-    //char answer[MAX_LINE_SIZE] = {0};
+    char *answer = (char *) calloc (MAX_LINE_SIZE, sizeof(char));
+
     printf(GREEN "\nЕсли хотите сыграть еще раз, введите CONT, иначе QUIT:\n" RESET);
     scanf("%29[^\n]", answer);
     getchar();
-    flag = strncmp(answer, "CONT", sizeof("CONT")) == 0;
+
+    flag = strncmp(answer, CONTINUE_ANSWER, sizeof(CONTINUE_ANSWER)) == 0;
     free(answer);
 
     return flag;
@@ -46,8 +50,6 @@ static TreeErrors AddNewCharacter(TreeNode_t *node) {
 
     char *name = (char *) calloc (MAX_LINE_SIZE, sizeof(char));
     char *new_question = (char *) calloc (MAX_LINE_SIZE, sizeof(char));
-    // char name[MAX_LINE_SIZE] = {0};
-    // char new_question[MAX_LINE_SIZE] = {0};
 
     printf(BLUE "\nОтветьте тогда, кого Вы загадывали? Введите имя (инициалы, прозвище):\n" RESET);
     scanf("%29[^\n]", name);
@@ -57,13 +59,10 @@ static TreeErrors AddNewCharacter(TreeNode_t *node) {
     scanf("%29[^\n]", new_question);
     getchar();
 
-    NodesInsertAtTheEnd(node, strdup(name), strdup(new_question));
-    //free(node->data);
-    // new_question[strlen(new_question)] = '?';
-    // node->data = strdup(new_question);
+    NodesInsertAtTheEnd(node, name, new_question);
 
-    free(name);
-    free(new_question);
+    // free(name);
+    // free(new_question);
 
     printf("\nХорошо, Акинатор переписан. Теперь в нем есть данный персонаж.\n");
 
@@ -77,6 +76,7 @@ static TreeErrors HandleCorrectGuess(TreeNode_t *head) {
     if (PlayAgain()) {
         return Akinator(head);
     }
+
     return kSuccess;
 }
 
@@ -88,6 +88,7 @@ static TreeErrors HandleWrongGuess(TreeNode_t *node, TreeNode_t *head) {
     if (PlayAgain()) {
         return Akinator(head);
     }
+
     return kSuccess;
 }
 
@@ -98,9 +99,8 @@ TreeErrors Akinator(TreeNode_t *node) {
     static TreeNode_t *head = NULL;
     if (!head) head = node;
 
-    char *question = (char *) calloc (MAX_LINE_SIZE, sizeof(char));
+    const char *question = node->data; 
     //char question[MAX_LINE_SIZE] = {0};
-    strcpy(question, node->data);
     //snprintf(question, MAX_LINE_SIZE, "%s", node->data);
 
     bool yes = AskYesNo(question);
@@ -127,7 +127,6 @@ TreeErrors Akinator(TreeNode_t *node) {
             }
         }
     }
-    free(question);
 
     return kSuccess;
 }
@@ -145,15 +144,15 @@ TreeErrors NodesInsertAtTheEnd(TreeNode_t *node, char *name, char *question) {
 
     node->left = new_node_left;
     node->right = new_node_right;
+    new_node_left->parent = node;
+    new_node_right->parent = node;
 
     size_t len = strlen(question);
     char *new_question = (char *) calloc (len + 2, sizeof(char));
     if (!new_question) return kNoMemory;
 
     strcpy(new_question, question);
-
     node->data = new_question;
-    free(new_question);
 
     return kSuccess;
 }
@@ -163,7 +162,6 @@ void DoAskGeneralQuestion(TreeNode_t *node) {
 
     printf("Это %s?", node->data);
 }
-
 
 void PrintAkinatorToFile(FILE *file, TreeNode_t *node) {
     assert(file);
@@ -188,7 +186,10 @@ void PrintAkinatorToFile(FILE *file, TreeNode_t *node) {
 }
 
 TreeErrors FindAkinatorNodeAddress(TreeNode_t *node, const char *value, TreeNode_t **address) {
-    if (!node) return kFailure;
+    assert(node);
+    assert(value);
+    assert(address);
+
     if (strcmp(value, node->data) == 0) {
         *address = node;
         return kSuccess;
@@ -207,7 +208,6 @@ TreeErrors PrintDefinition(TreeNode_t *node, const char *value, int count) {
     assert(node);
     assert(value);
 
-    static TreeNode_t *head = node;
     TreeNode_t *address = NULL;
     FindAkinatorNodeAddress(node, value, &address);
 
@@ -219,12 +219,52 @@ TreeErrors PrintDefinition(TreeNode_t *node, const char *value, int count) {
     printf("%s - address: %p\nDefinition: ", value, address);
 
 
-    while (node != head) {
-        printf("%s, ", node->data);
-        node = node->parent;
+    char **array_of_definitions = (char **) calloc (count * 2 + 1, sizeof(char *));
+    if (!array_of_definitions) {
+        fprintf(stderr, "No memory for calloc array of definitions.\n");
+        return kNoMemory;
     }
-    printf("%s\n", node->data);
+
+    size_t pos = 0;
+    TreeNode_t *current = address->parent;
+    TreeNode_t *prev = address;
+    while (current) {
+        if (prev) {
+            if (current->left == prev) {
+                array_of_definitions[pos++] = current->data;
+            } else if (current->right == prev) {
+                size_t len = strlen(current->data) + 5;
+                char *negated = (char *) calloc (len, sizeof(char));
+                if (!negated) {
+                    fprintf(stderr, "No memory for calloc array of definitions.\n");
+                    return kNoMemory;
+                }
+
+                snprintf(negated, len, "не %s", current->data);
+                array_of_definitions[pos++] = negated;
+            }
+        }
+        prev = current;
+        //printf("%s, ", node->data);
+        current = current->parent;
+    }
+
+    for (int i = (int)pos - 1; i >= 0; --i) {
+        printf("%s", array_of_definitions[i]);
+        if (i > 0) printf(" -> ");
+    }
+    printf("\n");
+
+    //printf("%s\n", node->data);
     printf("================================");
+
+    for (size_t i = 0; i < pos; ++i) {
+        if (strncmp(array_of_definitions[i], "не ", sizeof("не ")) == 0) {
+            free(array_of_definitions[i]);
+        }
+    }
+
+    free(array_of_definitions);
     return kSuccess;
 }
 
@@ -260,5 +300,4 @@ TreeErrors CompareResults(TreeNode_t *node, const char *value1, const char *valu
     //     printf() ...
     // } while (node);
     return kSuccess;
-
 }

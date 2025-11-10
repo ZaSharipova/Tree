@@ -11,8 +11,8 @@ void PrintDotNode(FILE *file, const TreeNode_t *node) {
 
     static int cnt = 0;
     fprintf(file, "    \"1\" [label = \"ROOT\"; shape=rect; fillcolor=pink]");
-    fprintf(file, "    \"%p\" [ label=\"{Addr: %p | Data: " TREE_SPEC" | {Left:  %p | Right: %p}}\"; shape=Mrecord; color=black];\n", 
-            (void *)node, (void *)node, node->data, 
+    fprintf(file, "    \"%p\" [ label=\"{Parent: %p | Addr: %p | Data: " TREE_SPEC" | {Left:  %p | Right: %p}}\"; shape=Mrecord; color=black];\n", 
+            (void *)node, (void *)node->parent, (void *)node, node->data, 
             node->left, 
             node->right);
     
@@ -22,12 +22,12 @@ void PrintDotNode(FILE *file, const TreeNode_t *node) {
     }
 
     if (node->left) {
-        fprintf(file, "    \"%p\" -> \"%p\" \n", (void *)node, (void *)node->left);
+        fprintf(file, "    \"%p\" -> \"%p\" \n [label=\"да\"бfontsize=20, fontcolor=darkgreen, labeldistance=2.0, labelangle=45];", (void *)node, (void *)node->left);
         PrintDotNode(file, node->left);
     }
 
     if (node->right) {
-        fprintf(file, "    \"%p\" -> \"%p\" \n", (void *)node, (void *)node->right);
+        fprintf(file, "    \"%p\" -> \"%p\" [label=\"нет\"]\n", (void *)node, (void *)node->right);
         PrintDotNode(file, node->right);
     }
 }
@@ -46,8 +46,8 @@ void WriteTreeToDotFile(const Tree_t *tree, const char *filename) {
     fprintf(file, "    rankdir=TB;\n");
     fprintf(file, "    node [shape=record, style=filled, fillcolor=lightblue];\n");
     fprintf(file, "    edge [fontsize=10];\n\n");
-    fprintf(file, "    graph [fontname=\"Arial\"];\n");      // Устанавливаем шрифт для графа
-    fprintf(file, "    node [fontname=\"Arial\"];\n");       // Устанавливаем шрифт для узлов
+    fprintf(file, "    graph [fontname=\"Arial\"];\n");
+    fprintf(file, "    node [fontname=\"Arial\"];\n");
     fprintf(file, "    edge [fontname=\"Arial\"];\n");      
 
     if (tree->root) {
