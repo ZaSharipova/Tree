@@ -1,7 +1,7 @@
 #ifndef ENUMS_H_
 #define ENUMS_H_
 
-typedef const char* TreeElem_t;
+typedef char* TreeElem_t;
 #define TREE_SPEC "%s"
 
 #define FILE_OUT "output.txt"

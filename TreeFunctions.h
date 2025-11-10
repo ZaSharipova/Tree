@@ -33,7 +33,7 @@ void PrintNodePostOrder(const TreeNode_t *node);
 void PrintNodeInOrder(const TreeNode_t *node);
 
 void PrintSortedNode(const TreeNode_t *node);
-void SortNodeToArray(const TreeNode_t *node, TreeElem_t *arr_after);
+void SortNodeToArray(const TreeNode_t *node, TreeElem_t *arr_after, int *i);
 
 TreeErrors DeleteNode(TreeNode_t *node);
 

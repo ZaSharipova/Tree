@@ -13,11 +13,11 @@ int main(void) {
     Tree_t tree = {};
     CHECK_ERROR_RETURN(TreeRootCtor(&tree));
 
-    const char *value = "No One knows";
-    INSERT_TO_TREE("No One knows");
+    char *value = "No One knows";
+    INSERT_TO_TREE(value);
     Akinator(tree.root);
 
-    CHECK_ERROR_RETURN(PrintDefinition(tree.root, "zarina", tree.size));
+    //CHECK_ERROR_RETURN(PrintDefinition(tree.root, "zarina", tree.size));
 
     WriteTreeToDotFile(&tree, FILE_OUT);
     // const char *number = "12";
@@ -31,7 +31,7 @@ int main(void) {
     // INSERT_TO_TREE("16");
     // INSERT_TO_TREE("6");
 
-    // int number = 0;
+    // int value = 0;
     // INSERT_TO_TREE(10);
     // INSERT_TO_TREE(5);
     // INSERT_TO_TREE(3);
@@ -49,7 +49,6 @@ int main(void) {
     // CHECK_ERROR_RETURN(TreeVerify(tree.root, (int)tree.size));
     // WriteTreeToDotFile(&tree, FILE_OUT);
     // PrintSortedNode(tree.root);
-
     // CheckSorting(arr_before, tree.root, arr_after, count);
 
     FILE *file = fopen("akinator_out.txt", "w");

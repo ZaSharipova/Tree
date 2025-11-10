@@ -14,28 +14,40 @@
 static bool AskYesNo(const char *question) {
     assert(question);
 
-    char answer[MAX_LINE_SIZE] = {0};
-    printf(YELLOW "%s (да/нет): " RESET, question);
+    bool flag = false;
+    char *answer = (char *) calloc (MAX_LINE_SIZE, sizeof(char));
+    //char answer[MAX_LINE_SIZE] = {0};
+    printf(YELLOW "\nЭто %s ? (да/нет): " RESET, question);
     scanf("%29[^\n]", answer);
     getchar();
-    return strncmp(answer, "да", 3) == 0;
+
+    flag = strncmp(answer, "да", 3) == 0;
+    free(answer);
+
+    return flag;
 }
 
 static bool PlayAgain(void) {
 
-    char answer[MAX_LINE_SIZE] = {0};
+    bool flag = false;
+    char *answer = (char *) calloc (MAX_LINE_SIZE, sizeof(answer));
+    //char answer[MAX_LINE_SIZE] = {0};
     printf(GREEN "\nЕсли хотите сыграть еще раз, введите CONT, иначе QUIT:\n" RESET);
     scanf("%29[^\n]", answer);
     getchar();
+    flag = strncmp(answer, "CONT", sizeof("CONT")) == 0;
+    free(answer);
 
-    return strncmp(answer, "CONT", 5) == 0;
+    return flag;
 }
 
 static TreeErrors AddNewCharacter(TreeNode_t *node) {
     assert(node);
 
-    char name[MAX_LINE_SIZE] = {0};
-    char new_question[MAX_LINE_SIZE] = {0};
+    char *name = (char *) calloc (MAX_LINE_SIZE, sizeof(char));
+    char *new_question = (char *) calloc (MAX_LINE_SIZE, sizeof(char));
+    // char name[MAX_LINE_SIZE] = {0};
+    // char new_question[MAX_LINE_SIZE] = {0};
 
     printf(BLUE "\nОтветьте тогда, кого Вы загадывали? Введите имя (инициалы, прозвище):\n" RESET);
     scanf("%29[^\n]", name);
@@ -49,6 +61,9 @@ static TreeErrors AddNewCharacter(TreeNode_t *node) {
     //free(node->data);
     // new_question[strlen(new_question)] = '?';
     // node->data = strdup(new_question);
+
+    free(name);
+    free(new_question);
 
     printf("\nХорошо, Акинатор переписан. Теперь в нем есть данный персонаж.\n");
 
@@ -83,8 +98,10 @@ TreeErrors Akinator(TreeNode_t *node) {
     static TreeNode_t *head = NULL;
     if (!head) head = node;
 
-    char question[MAX_LINE_SIZE] = {0};
-    snprintf(question, sizeof(question), "\nЭто %s?", node->data);
+    char *question = (char *) calloc (MAX_LINE_SIZE, sizeof(char));
+    //char question[MAX_LINE_SIZE] = {0};
+    strcpy(question, node->data);
+    //snprintf(question, MAX_LINE_SIZE, "%s", node->data);
 
     bool yes = AskYesNo(question);
 
@@ -110,11 +127,12 @@ TreeErrors Akinator(TreeNode_t *node) {
             }
         }
     }
+    free(question);
 
     return kSuccess;
 }
 
-TreeErrors NodesInsertAtTheEnd(TreeNode_t *node, const char *name, char *question) {
+TreeErrors NodesInsertAtTheEnd(TreeNode_t *node, char *name, char *question) {
     assert(node);
     assert(name);
     assert(question);
@@ -135,6 +153,7 @@ TreeErrors NodesInsertAtTheEnd(TreeNode_t *node, const char *name, char *questio
     strcpy(new_question, question);
 
     node->data = new_question;
+    free(new_question);
 
     return kSuccess;
 }
@@ -240,6 +259,6 @@ TreeErrors CompareResults(TreeNode_t *node, const char *value1, const char *valu
     // do {
     //     printf() ...
     // } while (node);
-
+    return kSuccess;
 
 }

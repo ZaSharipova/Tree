@@ -120,19 +120,17 @@ void PrintSortedNode(const TreeNode_t *node) {
     printf(") ");
 }
 
-void SortNodeToArray(const TreeNode_t *node, TreeElem_t *arr_after) {
+void SortNodeToArray(const TreeNode_t *node, TreeElem_t *arr_after, int *i) {
     assert(node);
     assert(arr_after);
 
-    static int i = 0;
-
     if (node->left) {
-        SortNodeToArray(node->left, arr_after);
+        SortNodeToArray(node->left, arr_after, i);
     }
-    arr_after[i++] = node->data;
+    arr_after[(*i)++] = node->data;
 
     if (node->right) {
-        SortNodeToArray(node->right, arr_after);
+        SortNodeToArray(node->right, arr_after, i);
     }
 }
 
@@ -254,7 +252,8 @@ int CheckSorting(TreeElem_t *arr_to_check_with, TreeNode_t *head, TreeElem_t *ar
     assert(head);
     assert(arr_before);
 
-    SortNodeToArray(head, arr_to_check_with);
+    int pos = 0;
+    SortNodeToArray(head, arr_to_check_with, &pos);
     qsort(arr_before, (size_t)count, sizeof(TreeElem_t), CompareElemsQsort);
     
     for (int i = 0; i < count; i++) {
