@@ -6,6 +6,8 @@ typedef char* TreeElem_t;
 
 #define FILE_OUT "output.txt"
 
+#define MAX_IMAGE_SIZE 100
+
 struct TreeNode_t {
     TreeElem_t data;
     TreeNode_t *parent;
@@ -24,8 +26,22 @@ enum TreeErrors{
     kNodeNullPointer,
     kBadTree,
     kNoSuchNode,
+    kNodeInvalidData,
+    kNodeSelfReference,
+    kNodeParentChildMismatch,
+    kNodeChildParentMismatch,
     kFailure,
 };
+
+typedef struct DumpInfo {
+    const char *filename_to_write_dump;
+    FILE *file;
+    const char *filename_to_write_graphviz;
+    const char *filename_dump_made;
+    char message[MAX_IMAGE_SIZE];
+    char image_file[MAX_IMAGE_SIZE];
+    size_t graph_counter;
+} DumpInfo;
 
 #define RESET   "\033[0m"
 #define WHITE   "\033[1;30m"

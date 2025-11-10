@@ -10,16 +10,25 @@
 int main(void) {
     TreeErrors err = kSuccess;
 
+    DumpInfo Info = {};
+    Info.filename_to_write_dump = "alldump.html";
+    Info.filename_to_write_graphviz = FILE_OUT;
+    Info.file = fopen(Info.filename_to_write_dump, "w");
+
     Tree_t tree = {};
     CHECK_ERROR_RETURN(TreeRootCtor(&tree));
 
     char *value = "No One knows";
     INSERT_TO_TREE(value);
-    Akinator(tree.root);
+    Akinator(tree.root, &Info);
 
-    WriteTreeToDotFile(&tree, FILE_OUT);
+    int cnt = 0;
+    CHECK_ERROR_RETURN(TreeVerify(tree.root, (int)tree.size, &cnt));
+
+    DoTreeInGraphviz(tree.root, &Info);
 
     CHECK_ERROR_RETURN(PrintDefinition(tree.root, "Зарина", tree.size));
+    CHECK_ERROR_RETURN(CompareResults(tree.root, "Зарина", "Исами", tree.size));
 
     // const char *number = "12";
     // INSERT_TO_TREE("10");
@@ -56,5 +65,6 @@ int main(void) {
     PrintAkinatorToFile(file, tree.root);
     fclose(file);
     CHECK_ERROR_RETURN(TreeDtor(&tree));
+    fclose(Info.file);
     return 0;
 }

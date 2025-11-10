@@ -194,37 +194,60 @@ TreeErrors InsertNode(TreeNode_t *parent_node, TreeElem_t *value) {
     return kSuccess;
 }
 
-TreeErrors TreeVerify(const TreeNode_t *head, int size) {
+TreeErrors TreeVerify(const TreeNode_t *head, int size, int *cnt) {
     assert(head);
+    assert(cnt);
 
-    static int nodes_cnt = 1;
+    NodeVerify(head);
+
     if (head->left) {
-        nodes_cnt++;
-        TreeVerify(head->left, size);
+        (*cnt)++;
+        TreeVerify(head->left, size, cnt);
     }
 
     if (head->right) {
-        nodes_cnt++;
-        TreeVerify(head->right, size);
+        (*cnt)++;
+        TreeVerify(head->right, size, cnt);
     }
 
-    if (nodes_cnt < size) {
+    if (*cnt < size) {
         return kBadTree;
     }
     return kSuccess;
 }
 
 TreeErrors NodeVerify(const TreeNode_t *node) {
-    assert(node);
-
-    if (node ==  NULL) {
+    if (node == NULL) {
         return kNodeNullPointer;
     }
 
-
-
+    if (node->data == NULL) {
+        return kNodeInvalidData;
+    }
+    
+    if (node->parent == node || node->left == node || node->right == node) {
+        return kNodeSelfReference;
+    }
+    
+    if (node->parent != NULL) {
+        if (node->parent->left != node && node->parent->right != node) {
+            return kNodeParentChildMismatch;
+        }
+    }
+    
+    if (node->left != NULL) {
+        if (node->left->parent != node) {
+            return kNodeChildParentMismatch;
+        }
+    }
+    if (node->right != NULL) {
+        if (node->right->parent != node) {
+            return kNodeChildParentMismatch;
+        }
+    }
     return kSuccess;
 }
+
 
 TreeErrors DeleteNode(TreeNode_t *node) {
     if (!node)

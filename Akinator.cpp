@@ -7,6 +7,8 @@
 
 #include "Enums.h"
 #include "TreeFunctions.h"
+#include "TreeGraph.h"
+#include "TreeDump.h"
 
 #define MAX_LINE_SIZE 30
 #define MAX_LINE_SPECIFIER "29"
@@ -76,32 +78,41 @@ static TreeErrors AddNewCharacter(TreeNode_t *node) {
     return kSuccess;
 }
 
-static TreeErrors DoCorrectGuess(TreeNode_t *head) {
+static TreeErrors DoCorrectGuess(TreeNode_t *head, DumpInfo *Info) {
     assert(head);
 
     printf(RED "\nОтлично, ответ угадан!\n" RESET);
     if (PlayAgain()) {
-        return Akinator(head);
+        return Akinator(head, Info);
     }
 
     return kSuccess;
 }
 
-static TreeErrors DoWrongGuess(TreeNode_t *node, TreeNode_t *head) {
+static TreeErrors DoWrongGuess(TreeNode_t *node, TreeNode_t *head, DumpInfo *Info) {
     assert(node);
     assert(head);
+    assert(Info);
 
-    AddNewCharacter(node);
+   AddNewCharacter(node);
+
+    snprintf(Info->message, sizeof(Info->message), "Added new character with question %s?", node->data);
+    DoTreeInGraphviz((const TreeNode_t *)head, Info);
+    DoDump(Info);
+            
     if (PlayAgain()) {
-        return Akinator(head);
+        return Akinator(head, Info);
     }
 
     return kSuccess;
 }
 
 
-TreeErrors Akinator(TreeNode_t *node) {
+TreeErrors Akinator(TreeNode_t *node, DumpInfo *Info) {
     assert(node);
+
+    TreeErrors err = kSuccess;
+    CHECK_ERROR_RETURN(NodeVerify(node));
 
     static TreeNode_t *head = NULL;
     if (!head) head = node;
@@ -111,28 +122,27 @@ TreeErrors Akinator(TreeNode_t *node) {
 
     if (!node->left && !node->right) {
         if (yes) {
-            return DoCorrectGuess(head);
-
+            return DoCorrectGuess(head, Info);
         } else {
-            return DoWrongGuess(node, head);
+            return DoWrongGuess(node, head, Info);
         }
-
     } else {
         if (yes) {
             if (node->left) {
-                return Akinator(node->left);
+                return Akinator(node->left, Info);
             } else {
                 fprintf(stderr, "Ошибка: нет левого узла для ответа 'да'.\n");
             }
-
         } else {
             if (node->right) {
-                return Akinator(node->right);
+                return Akinator(node->right, Info);
             } else {
                 fprintf(stderr, "Ошибка: нет правого узла для ответа 'нет'.\n");
             }
         }
     }
+
+    CHECK_ERROR_RETURN(NodeVerify(node));
 
     return kSuccess;
 }
@@ -159,6 +169,7 @@ TreeErrors NodesInsertAtTheEnd(TreeNode_t *node, char *name, char *question) {
     strcpy(new_question, question);
     node->data = new_question;
 
+    
     return kSuccess;
 }
 
@@ -252,13 +263,12 @@ TreeErrors PrintDefinition(TreeNode_t *node, const char *value, size_t count) {
         current = current->parent;
     }
 
-    for (int i = (int)pos - 1; i >= 0; --i) {
+    for (int i = (int)pos - 1; i >= 0; i--) {
         printf("%s", array_of_definitions[i]);
         if (i > 0) printf(" -> ");
     }
     printf("\n");
 
-    //printf("%s\n", node->data);
     printf("================================");
 
     for (size_t i = 0; i < pos; ++i) {
@@ -283,24 +293,75 @@ TreeErrors CompareResults(TreeNode_t *node, const char *value1, const char *valu
 
     FindAkinatorNodeAddress(node, value1, &address1);
     if (!address1) {
-        fprintf(stderr, "No address have found.");
+        fprintf(stderr, "Address for '%s' not found.\n", value1);
+        return kNoSuchNode;
     }
 
     FindAkinatorNodeAddress(node, value2, &address2);
     if (!address2) {
-        fprintf(stderr, "No address have found.");
-    }
-    
-    node = head;
-    printf("Схожи в: ");
-    while (node != address1) {
-        printf("%s, ", node->data);
-        node = node->parent;
+        fprintf(stderr, "Address for '%s' not found.\n", value2);
+        return kNoSuchNode;
     }
 
-    // printf("Различаются в: ");
-    // do {
-    //     printf() ...
-    // } while (node);
+    TreeNode_t **path1 = (TreeNode_t **) calloc (count, sizeof(TreeNode_t *));
+    if (!path1) return kNoMemory;
+
+    TreeNode_t **path2 = (TreeNode_t **) calloc (count, sizeof(TreeNode_t *));
+    if (!path2) {
+        free(path1);
+        return kNoMemory;
+    }
+    int len1 = 0;
+    int len2 = 0;
+
+    for (TreeNode_t *cur = address1; cur != NULL; cur = cur->parent) {
+        if (len1 >= count) break;
+        path1[len1++] = cur;
+    }
+    for (TreeNode_t *cur = address2; cur != NULL; cur = cur->parent) {
+        if (len2 >= count) break;
+        path2[len2++] = cur;
+    }
+
+    for (int i = 0; i < len1 / 2; i++) {
+        TreeNode_t *tmp = path1[i];
+        path1[i] = path1[len1 - 1 - i];
+        path1[len1 - 1 - i] = tmp;
+    }
+    for (int i = 0; i < len2 / 2; i++) {
+        TreeNode_t *tmp = path2[i];
+        path2[i] = path2[len2 - 1 - i];
+        path2[len2 - 1 - i] = tmp;
+    }
+
+    int common_len = 0;
+    int min_len = (len1 < len2) ? len1 : len2;
+    for (int i = 0; i < min_len; i++) {
+        if (strcmp(path1[i]->data, path2[i]->data) == 0) {
+            common_len++;
+        } else {
+            break;
+        }
+    }
+
+    printf("Общие предки:\n");
+    for (int i = 0; i < common_len; i++) {
+        printf("  %s\n", path1[i]->data);
+    }
+    printf("\n");
+
+    printf("Уникальные предки для %s:\n", value1);
+    for (int i = common_len; i < len1; i++) {
+        printf("  %s\n", path1[i]->data);
+    }
+    printf("\n");
+
+    printf("Уникальные предки для %s:\n", value2);
+    for (int i = common_len; i < len2; i++) {
+        printf("  %s\n", path2[i]->data);
+    }
+
+    free(path1);
+    free(path2);
     return kSuccess;
 }

@@ -6,6 +6,6 @@
 #include "Enums.h"
 
 void PrintDotNode(FILE *file, const TreeNode_t *node);
-void WriteTreeToDotFile(const Tree_t *tree, const char *filename);
+void DoTreeInGraphviz(const TreeNode_t *tree, DumpInfo *Info);
 
 #endif //TREE_GRAPH_H_
