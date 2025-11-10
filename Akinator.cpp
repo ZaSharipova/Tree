@@ -9,67 +9,74 @@
 #include "TreeFunctions.h"
 
 #define MAX_LINE_SIZE 30
+#define MAX_LINE_SPECIFIER "29"
 #define YES_ANSWER "да"
 #define NO_ANSWER "нет"
 #define CONTINUE_ANSWER "CONT"
 #define QUIT_ANSWER "QUIT"
 
-static bool AskYesNo(const char *question) {
-    assert(question);
+#define DO_CALLOC_AND_CHECK_PROBLEM_RETURN(ptr, size)                   \
+    char *ptr = (char *) calloc (size, sizeof(char));                   \
+    if (!ptr) {                                                         \
+        fprintf(stderr, "No memory in calloc.\n");                      \
+        return kNoMemory;                                               \
+    }
+
+
+static void ReadLine(char *answer) {
+    assert(answer);
+
+    scanf("%" MAX_LINE_SPECIFIER "[^\n]", answer);
+    int ch = 0;
+    while ((ch = getchar()) != '\n' && ch != EOF);
+}
+
+static bool AskAndReturnYesNo(const char *type_of_answer, int size_of_line) {
+    assert(type_of_answer);
+
+    DO_CALLOC_AND_CHECK_PROBLEM_RETURN(answer, MAX_LINE_SIZE);
+    ReadLine(answer);
 
     bool flag = false;
-    char *answer = (char *) calloc (MAX_LINE_SIZE, sizeof(char));
-
-    printf(YELLOW "\nЭто %s ? (" YES_ANSWER"/" NO_ANSWER"): " RESET, question);
-    scanf("%29[^\n]", answer);
-    getchar();
-
-    flag = strncmp(answer, YES_ANSWER, sizeof(YES_ANSWER)) == 0;
+    flag = strncmp(answer, type_of_answer, (size_t)size_of_line) == 0;
     free(answer);
 
     return flag;
 }
 
+static bool AskYesNo(const char *question) {
+    assert(question);
+
+    printf(YELLOW "\nЭто %s? (" YES_ANSWER"/" NO_ANSWER"): " RESET, question);
+    return AskAndReturnYesNo(YES_ANSWER, sizeof(YES_ANSWER));
+}
+
 static bool PlayAgain(void) {
 
-    bool flag = false;
-    char *answer = (char *) calloc (MAX_LINE_SIZE, sizeof(char));
-
     printf(GREEN "\nЕсли хотите сыграть еще раз, введите CONT, иначе QUIT:\n" RESET);
-    scanf("%29[^\n]", answer);
-    getchar();
-
-    flag = strncmp(answer, CONTINUE_ANSWER, sizeof(CONTINUE_ANSWER)) == 0;
-    free(answer);
-
-    return flag;
+    return AskAndReturnYesNo(CONTINUE_ANSWER, sizeof(CONTINUE_ANSWER));
 }
 
 static TreeErrors AddNewCharacter(TreeNode_t *node) {
     assert(node);
 
-    char *name = (char *) calloc (MAX_LINE_SIZE, sizeof(char));
-    char *new_question = (char *) calloc (MAX_LINE_SIZE, sizeof(char));
-
     printf(BLUE "\nОтветьте тогда, кого Вы загадывали? Введите имя (инициалы, прозвище):\n" RESET);
-    scanf("%29[^\n]", name);
-    getchar();
+
+    DO_CALLOC_AND_CHECK_PROBLEM_RETURN(name, MAX_LINE_SIZE);
+    ReadLine(name);
 
     printf(BLUE "\nОтлично! Чем \"%s\" отличается от \"%s\"? Он ... :\n" RESET, name, node->data);
-    scanf("%29[^\n]", new_question);
-    getchar();
+
+    DO_CALLOC_AND_CHECK_PROBLEM_RETURN(new_question, MAX_LINE_SIZE); 
+    ReadLine(new_question);
 
     NodesInsertAtTheEnd(node, name, new_question);
-
-    // free(name);
-    // free(new_question);
-
-    printf("\nХорошо, Акинатор переписан. Теперь в нем есть данный персонаж.\n");
+    printf(MAGENTA "\nХорошо, Акинатор дополнен. Теперь в нем есть данный персонаж!\n" RESET);
 
     return kSuccess;
 }
 
-static TreeErrors HandleCorrectGuess(TreeNode_t *head) {
+static TreeErrors DoCorrectGuess(TreeNode_t *head) {
     assert(head);
 
     printf(RED "\nОтлично, ответ угадан!\n" RESET);
@@ -80,7 +87,7 @@ static TreeErrors HandleCorrectGuess(TreeNode_t *head) {
     return kSuccess;
 }
 
-static TreeErrors HandleWrongGuess(TreeNode_t *node, TreeNode_t *head) {
+static TreeErrors DoWrongGuess(TreeNode_t *node, TreeNode_t *head) {
     assert(node);
     assert(head);
 
@@ -100,16 +107,14 @@ TreeErrors Akinator(TreeNode_t *node) {
     if (!head) head = node;
 
     const char *question = node->data; 
-    //char question[MAX_LINE_SIZE] = {0};
-    //snprintf(question, MAX_LINE_SIZE, "%s", node->data);
-
     bool yes = AskYesNo(question);
 
     if (!node->left && !node->right) {
         if (yes) {
-            return HandleCorrectGuess(head);
+            return DoCorrectGuess(head);
+
         } else {
-            return HandleWrongGuess(node, head);
+            return DoWrongGuess(node, head);
         }
 
     } else {
@@ -119,6 +124,7 @@ TreeErrors Akinator(TreeNode_t *node) {
             } else {
                 fprintf(stderr, "Ошибка: нет левого узла для ответа 'да'.\n");
             }
+
         } else {
             if (node->right) {
                 return Akinator(node->right);
@@ -147,9 +153,8 @@ TreeErrors NodesInsertAtTheEnd(TreeNode_t *node, char *name, char *question) {
     new_node_left->parent = node;
     new_node_right->parent = node;
 
-    size_t len = strlen(question);
-    char *new_question = (char *) calloc (len + 2, sizeof(char));
-    if (!new_question) return kNoMemory;
+    size_t len = strlen(question) + 2;
+    DO_CALLOC_AND_CHECK_PROBLEM_RETURN(new_question, len);
 
     strcpy(new_question, question);
     node->data = new_question;
@@ -190,10 +195,11 @@ TreeErrors FindAkinatorNodeAddress(TreeNode_t *node, const char *value, TreeNode
     assert(value);
     assert(address);
 
-    if (strcmp(value, node->data) == 0) {
+    if (strcmp(value, node->data) == 0) { //
         *address = node;
         return kSuccess;
     }
+
     if (node->left) {
         if (FindAkinatorNodeAddress(node->left, value, address) == kSuccess) return kSuccess;
     }
@@ -204,7 +210,7 @@ TreeErrors FindAkinatorNodeAddress(TreeNode_t *node, const char *value, TreeNode
 }
 
 
-TreeErrors PrintDefinition(TreeNode_t *node, const char *value, int count) {
+TreeErrors PrintDefinition(TreeNode_t *node, const char *value, size_t count) {
     assert(node);
     assert(value);
 
@@ -232,20 +238,17 @@ TreeErrors PrintDefinition(TreeNode_t *node, const char *value, int count) {
         if (prev) {
             if (current->left == prev) {
                 array_of_definitions[pos++] = current->data;
+
             } else if (current->right == prev) {
-                size_t len = strlen(current->data) + 5;
-                char *negated = (char *) calloc (len, sizeof(char));
-                if (!negated) {
-                    fprintf(stderr, "No memory for calloc array of definitions.\n");
-                    return kNoMemory;
-                }
+                size_t len = strlen(current->data) * 4 + 4;
+                DO_CALLOC_AND_CHECK_PROBLEM_RETURN(negated, len);
 
                 snprintf(negated, len, "не %s", current->data);
                 array_of_definitions[pos++] = negated;
             }
         }
+
         prev = current;
-        //printf("%s, ", node->data);
         current = current->parent;
     }
 

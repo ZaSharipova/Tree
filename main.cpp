@@ -17,10 +17,10 @@ int main(void) {
     INSERT_TO_TREE(value);
     Akinator(tree.root);
 
-    CHECK_ERROR_RETURN(PrintDefinition(tree.root, "Зарина", tree.size));
-    printf("%d", tree.size);
-
     WriteTreeToDotFile(&tree, FILE_OUT);
+
+    CHECK_ERROR_RETURN(PrintDefinition(tree.root, "Зарина", tree.size));
+
     // const char *number = "12";
     // INSERT_TO_TREE("10");
     // INSERT_TO_TREE("5");

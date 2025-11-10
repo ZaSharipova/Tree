@@ -9,5 +9,5 @@ TreeErrors NodesInsertAtTheEnd(TreeNode_t *node, char *name, char *question);
 TreeErrors Akinator(TreeNode_t *node);
 
 void PrintAkinatorToFile(FILE *file, TreeNode_t *node);
-TreeErrors PrintDefinition(TreeNode_t *node, const char *value, int count);
+TreeErrors PrintDefinition(TreeNode_t *node, const char *value, size_t count);
 #endif //AKINATOR_H_
