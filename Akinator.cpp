@@ -113,6 +113,46 @@ static TreeErrors DoWrongGuess(TreeNode_t *head, TreeNode_t *node, DumpInfo *Inf
 }
 
 
+// TreeErrors Akinator(TreeNode_t *head, TreeNode_t *node, DumpInfo *Info) {
+//     assert(head);
+//     assert(node);
+//     assert(Info);
+
+//     TreeErrors err = kSuccess;
+//     CHECK_ERROR_RETURN(NodeVerify(node));
+
+//     const char *question = node->data; 
+//     bool yes = AskYesNo(question);
+
+//     if (!node->left && !node->right) {
+//         if (yes) {
+//             return DoCorrectGuess(head, node, Info);
+//         } else {
+//             return DoWrongGuess(head, node, Info);
+//         }
+//     } else {
+//         if (yes) {
+//             if (node->left) {
+//                 return Akinator(head, node->left, Info);
+//             } else {
+//                 fprintf(stderr, "Ошибка: нет левого узла для ответа 'да'.\n");
+//                 return kNoPossibleNode;
+//             }
+//         } else {
+//             if (node->right) {
+//                 return Akinator(head, node->right, Info);
+//             } else {
+//                 fprintf(stderr, "Ошибка: нет правого узла для ответа 'нет'.\n");
+//                 return kNoPossibleNode;
+//             }
+//         }
+//     }
+
+//     CHECK_ERROR_RETURN(NodeVerify(node));
+
+//     return kSuccess;
+// }
+
 TreeErrors Akinator(TreeNode_t *head, TreeNode_t *node, DumpInfo *Info) {
     assert(head);
     assert(node);
@@ -121,32 +161,37 @@ TreeErrors Akinator(TreeNode_t *head, TreeNode_t *node, DumpInfo *Info) {
     TreeErrors err = kSuccess;
     CHECK_ERROR_RETURN(NodeVerify(node));
 
-    const char *question = node->data; 
-    bool yes = AskYesNo(question);
+    const char *question = NULL;
+    bool yes = false;
 
-    if (!node->left && !node->right) {
-        if (yes) {
-            return DoCorrectGuess(head, node, Info);
-        } else {
-            return DoWrongGuess(head, node, Info);
-        }
-    } else {
-        if (yes) {
-            if (node->left) {
-                return Akinator(head, node->left, Info);
+    while (node) {
+        question = node->data;
+        yes = AskYesNo(question);
+        if (!node->left && !node->right) {
+            if (yes) {
+                return DoCorrectGuess(head, node, Info);
             } else {
-                fprintf(stderr, "Ошибка: нет левого узла для ответа 'да'.\n");
-                return kNoPossibleNode;
+                return DoWrongGuess(head, node, Info);
             }
         } else {
-            if (node->right) {
-                return Akinator(head, node->right, Info);
+            if (yes) {
+                if (node->left) {
+                    node = node->left;
+                } else {
+                    fprintf(stderr, "Ошибка: нет левого узла для ответа 'да'.\n");
+                    return kNoPossibleNode;
+                }
             } else {
-                fprintf(stderr, "Ошибка: нет правого узла для ответа 'нет'.\n");
-                return kNoPossibleNode;
+                if (node->right) {
+                    node = node->right;
+                } else {
+                    fprintf(stderr, "Ошибка: нет правого узла для ответа 'нет'.\n");
+                    return kNoPossibleNode;
+                }
             }
         }
     }
+
 
     CHECK_ERROR_RETURN(NodeVerify(node));
 
