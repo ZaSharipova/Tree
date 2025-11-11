@@ -5,6 +5,7 @@
 #include "TreeFunctions.h"
 #include "Enums.h"
 #include "TreeGraph.h"
+#include "TreeDump.h"
 #include "Akinator.h"
 
 int main(void) {
@@ -22,6 +23,8 @@ int main(void) {
     //ReadAkinatorTreeFromFilename("akinator_out.txt", &tree.root);
     char *value = "No One knows";
     INSERT_TO_TREE(value);
+    DoTreeInGraphviz((const TreeNode_t *)tree.root, &Info);
+    DoDump(&Info);
     Akinator(tree.root, tree.root, &Info);
 
     int cnt = 0;

@@ -75,6 +75,7 @@ static TreeErrors AddNewCharacter(TreeNode_t *node) {
 
     NodesInsertAtTheEnd(node, name, new_question);
     printf(MAGENTA "\nХорошо, Акинатор дополнен. Теперь в нем есть данный персонаж!\n" RESET);
+    free(new_question);
 
     return kSuccess;
 }
@@ -287,87 +288,87 @@ TreeErrors PrintDefinition(TreeNode_t *node, const char *value, size_t count) {
     return kSuccess;
 }
 
-TreeErrors CompareResults(TreeNode_t *node, const char *value1, const char *value2, int count) {
-    assert(node);
-    assert(value1);
-    assert(value2);
+// TreeErrors CompareResults(TreeNode_t *node, const char *value1, const char *value2, int count) {
+//     assert(node);
+//     assert(value1);
+//     assert(value2);
 
-    // static TreeNode_t *head = node;
+//     // static TreeNode_t *head = node;
 
-    TreeNode_t *address1 = NULL;
-    TreeNode_t *address2 = NULL;
+//     TreeNode_t *address1 = NULL;
+//     TreeNode_t *address2 = NULL;
 
-    FindAkinatorNodeAddress(node, value1, &address1);
-    if (!address1) {
-        fprintf(stderr, "Address for '%s' not found.\n", value1);
-        return kNoSuchNode;
-    }
+//     FindAkinatorNodeAddress(node, value1, &address1);
+//     if (!address1) {
+//         fprintf(stderr, "Address for '%s' not found.\n", value1);
+//         return kNoSuchNode;
+//     }
 
-    FindAkinatorNodeAddress(node, value2, &address2);
-    if (!address2) {
-        fprintf(stderr, "Address for '%s' not found.\n", value2);
-        return kNoSuchNode;
-    }
+//     FindAkinatorNodeAddress(node, value2, &address2);
+//     if (!address2) {
+//         fprintf(stderr, "Address for '%s' not found.\n", value2);
+//         return kNoSuchNode;
+//     }
 
-    TreeNode_t **path1 = (TreeNode_t **) calloc (count, sizeof(TreeNode_t *));
-    if (!path1) return kNoMemory;
+//     TreeNode_t **path1 = (TreeNode_t **) calloc (count, sizeof(TreeNode_t *));
+//     if (!path1) return kNoMemory;
 
-    TreeNode_t **path2 = (TreeNode_t **) calloc (count, sizeof(TreeNode_t *));
-    if (!path2) {
-        free(path1);
-        return kNoMemory;
-    }
-    int len1 = 0;
-    int len2 = 0;
+//     TreeNode_t **path2 = (TreeNode_t **) calloc (count, sizeof(TreeNode_t *));
+//     if (!path2) {
+//         free(path1);
+//         return kNoMemory;
+//     }
+//     int len1 = 0;
+//     int len2 = 0;
 
-    for (TreeNode_t *cur = address1; cur != NULL; cur = cur->parent) {
-        if (len1 >= count) break;
-        path1[len1++] = cur;
-    }
-    for (TreeNode_t *cur = address2; cur != NULL; cur = cur->parent) {
-        if (len2 >= count) break;
-        path2[len2++] = cur;
-    }
+//     for (TreeNode_t *cur = address1; cur != NULL; cur = cur->parent) {
+//         if (len1 >= count) break;
+//         path1[len1++] = cur;
+//     }
+//     for (TreeNode_t *cur = address2; cur != NULL; cur = cur->parent) {
+//         if (len2 >= count) break;
+//         path2[len2++] = cur;
+//     }
 
-    for (int i = 0; i < len1 / 2; i++) {
-        TreeNode_t *tmp = path1[i];
-        path1[i] = path1[len1 - 1 - i];
-        path1[len1 - 1 - i] = tmp;
-    }
-    for (int i = 0; i < len2 / 2; i++) {
-        TreeNode_t *tmp = path2[i];
-        path2[i] = path2[len2 - 1 - i];
-        path2[len2 - 1 - i] = tmp;
-    }
+//     for (int i = 0; i < len1 / 2; i++) {
+//         TreeNode_t *tmp = path1[i];
+//         path1[i] = path1[len1 - 1 - i];
+//         path1[len1 - 1 - i] = tmp;
+//     }
+//     for (int i = 0; i < len2 / 2; i++) {
+//         TreeNode_t *tmp = path2[i];
+//         path2[i] = path2[len2 - 1 - i];
+//         path2[len2 - 1 - i] = tmp;
+//     }
 
-    int common_len = 0;
-    int min_len = (len1 < len2) ? len1 : len2;
-    for (int i = 0; i < min_len; i++) {
-        if (strcmp(path1[i]->data, path2[i]->data) == 0) {
-            common_len++;
-        } else {
-            break;
-        }
-    }
+//     int common_len = 0;
+//     int min_len = (len1 < len2) ? len1 : len2;
+//     for (int i = 0; i < min_len; i++) {
+//         if (strcmp(path1[i]->data, path2[i]->data) == 0) {
+//             common_len++;
+//         } else {
+//             break;
+//         }
+//     }
 
-    printf("Общие предки:\n");
-    for (int i = 0; i < common_len; i++) {
-        printf("  %s\n", path1[i]->data);
-    }
-    printf("\n");
+//     printf("Общие предки:\n");
+//     for (int i = 0; i < common_len; i++) {
+//         printf("  %s\n", path1[i]->data);
+//     }
+//     printf("\n");
 
-    printf("Уникальные предки для %s:\n", value1);
-    for (int i = common_len; i < len1; i++) {
-        printf("  %s\n", path1[i]->data);
-    }
-    printf("\n");
+//     printf("Уникальные предки для %s:\n", value1);
+//     for (int i = common_len; i < len1; i++) {
+//         printf("  %s\n", path1[i]->data);
+//     }
+//     printf("\n");
 
-    printf("Уникальные предки для %s:\n", value2);
-    for (int i = common_len; i < len2; i++) {
-        printf("  %s\n", path2[i]->data);
-    }
+//     printf("Уникальные предки для %s:\n", value2);
+//     for (int i = common_len; i < len2; i++) {
+//         printf("  %s\n", path2[i]->data);
+//     }
 
-    free(path1);
-    free(path2);
-    return kSuccess;
-}
+//     free(path1);
+//     free(path2);
+//     return kSuccess;
+// }

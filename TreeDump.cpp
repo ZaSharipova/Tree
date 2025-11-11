@@ -19,8 +19,11 @@ void DoDump(DumpInfo *Info) {
     }
     FILE *file = Info->file;
 
-    fprintf(file, "<h2>DUMP new character with question: <font color = orange> %s?</font>, and name: <font color = orange> %s</font> </h2>\n", 
+    if (Info->name && Info->question) fprintf(file, "<h2>DUMP new character with question: <font color = orange> %s?</font>, and name: <font color = orange> %s</font> </h2>\n", 
         Info->question, Info->name);
+    else {
+        fprintf(file, "<h2> DUMP</h2>");
+    }
     PrintCurrentTime(file, "made");
     //fprintf(file, "<h3 style=\"margin: 2px 0;\"> tree size: %zu</h3>", Info->tree->size);
     fprintf(file, "<h3 style=\"margin: 2px 0;\"> tree root address: %p</h3>", Info->tree->root);
