@@ -71,12 +71,12 @@ void PrintDotNode(FILE *file, const TreeNode_t *node) {
 
 
     if (node->left) {
-        fprintf(file, "    \"%p\" -> \"%p\" \n [label=\"да\", fontsize=15, fontcolor=darkgreen, labeldistance=2.0, labelangle=45];", (void *)node, (void *)node->left);
+        fprintf(file, "    \"%p\" -> \"%p\" \n [label=\"да\", fontsize=15, fontcolor=darkgreen, labeldistance=2.0, labelangle=45, color=darkolivegreen2];", (void *)node, (void *)node->left);
         PrintDotNode(file, node->left);
     }
 
     if (node->right) {
-        fprintf(file, "    \"%p\" -> \"%p\" [label=\"нет\", fontsize=15, fontcolor=darkred, labeldistance=2.0, labelangle=45];\n", (void *)node, (void *)node->right);
+        fprintf(file, "    \"%p\" -> \"%p\" [label=\"нет\", fontsize=15, fontcolor=darkred, labeldistance=2.0, labelangle=45, color=coral1];\n", (void *)node, (void *)node->right);
         PrintDotNode(file, node->right);
     }
 }

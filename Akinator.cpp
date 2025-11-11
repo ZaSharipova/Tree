@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 #include "Enums.h"
 #include "TreeFunctions.h"
@@ -78,66 +79,70 @@ static TreeErrors AddNewCharacter(TreeNode_t *node) {
     return kSuccess;
 }
 
-static TreeErrors DoCorrectGuess(TreeNode_t *head, DumpInfo *Info) {
+static TreeErrors DoCorrectGuess(TreeNode_t *head, TreeNode_t *node, DumpInfo *Info) {
     assert(head);
+    assert(node);
+    assert(Info);
 
     printf(RED "\nОтлично, ответ угадан!\n" RESET);
     if (PlayAgain()) {
-        return Akinator(head, Info);
+        return Akinator(head, head, Info);
     }
 
     return kSuccess;
 }
 
-static TreeErrors DoWrongGuess(TreeNode_t *node, TreeNode_t *head, DumpInfo *Info) {
+static TreeErrors DoWrongGuess(TreeNode_t *head, TreeNode_t *node, DumpInfo *Info) {
     assert(node);
     assert(head);
     assert(Info);
 
-   AddNewCharacter(node);
+    AddNewCharacter(node);
 
-    snprintf(Info->message, sizeof(Info->message), "Added new character with question %s?", node->data);
+    Info->question = node->data;
+    Info->name = node->left->data;
     DoTreeInGraphviz((const TreeNode_t *)head, Info);
     DoDump(Info);
             
     if (PlayAgain()) {
-        return Akinator(head, Info);
+        return Akinator(head, head, Info);
     }
 
     return kSuccess;
 }
 
 
-TreeErrors Akinator(TreeNode_t *node, DumpInfo *Info) {
+TreeErrors Akinator(TreeNode_t *head, TreeNode_t *node, DumpInfo *Info) {
+    assert(head);
     assert(node);
+    assert(Info);
 
     TreeErrors err = kSuccess;
     CHECK_ERROR_RETURN(NodeVerify(node));
-
-    static TreeNode_t *head = NULL;
-    if (!head) head = node;
 
     const char *question = node->data; 
     bool yes = AskYesNo(question);
 
     if (!node->left && !node->right) {
         if (yes) {
-            return DoCorrectGuess(head, Info);
+            return DoCorrectGuess(head, node, Info);
         } else {
-            return DoWrongGuess(node, head, Info);
+            return DoWrongGuess(head, node, Info);
         }
     } else {
         if (yes) {
             if (node->left) {
-                return Akinator(node->left, Info);
+                return Akinator(head, node->left, Info);
             } else {
                 fprintf(stderr, "Ошибка: нет левого узла для ответа 'да'.\n");
+                return kNoPossibleNode;
             }
         } else {
             if (node->right) {
-                return Akinator(node->right, Info);
+                return Akinator(head, node->right, Info);
             } else {
                 fprintf(stderr, "Ошибка: нет правого узла для ответа 'нет'.\n");
+                return kNoPossibleNode;
             }
         }
     }
@@ -163,13 +168,14 @@ TreeErrors NodesInsertAtTheEnd(TreeNode_t *node, char *name, char *question) {
     new_node_left->parent = node;
     new_node_right->parent = node;
 
-    size_t len = strlen(question) + 2;
-    DO_CALLOC_AND_CHECK_PROBLEM_RETURN(new_question, len);
+    // size_t len = strlen(question) + 2;
+    // DO_CALLOC_AND_CHECK_PROBLEM_RETURN(new_question, len);
 
-    strcpy(new_question, question);
-    node->data = new_question;
+    // strcpy(new_question, question);
+    // node->data = new_question;
 
-    
+    node->data = strdup(question);
+
     return kSuccess;
 }
 
@@ -286,7 +292,7 @@ TreeErrors CompareResults(TreeNode_t *node, const char *value1, const char *valu
     assert(value1);
     assert(value2);
 
-    static TreeNode_t *head = node;
+    // static TreeNode_t *head = node;
 
     TreeNode_t *address1 = NULL;
     TreeNode_t *address2 = NULL;

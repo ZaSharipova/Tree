@@ -19,9 +19,14 @@ void DoDump(DumpInfo *Info) {
     }
     FILE *file = Info->file;
 
-    fprintf(file, "<pre> <h2>DUMP <font color = orange> %s </font> </h2>\n", Info->message);
+    fprintf(file, "<h2>DUMP new character with question: <font color = orange> %s?</font>, and name: <font color = orange> %s</font> </h2>\n", 
+        Info->question, Info->name);
     PrintCurrentTime(file, "made");
+    //fprintf(file, "<h3 style=\"margin: 2px 0;\"> tree size: %zu</h3>", Info->tree->size);
+    fprintf(file, "<h3 style=\"margin: 2px 0;\"> tree root address: %p</h3>", Info->tree->root);
     fprintf(file, "<img src = %s>", Info->image_file);
+
+    fprintf(file, "<hr style=\"border: none; height: 2px; background-color: black;\">");
 }
 
 static void PrintCurrentTime(FILE *file, const char *label) {
@@ -34,5 +39,6 @@ static void PrintCurrentTime(FILE *file, const char *label) {
     char buf_time[MAX_STRING_SIZE] = {};
     strftime(buf_time, sizeof(buf_time), "%Y-%m-%d %H:%M:%S\n", tm_now);
 
-    fprintf(file, "<h4 style=\"margin: 3px 0;\">%s: %s</h4>\n", label, buf_time);
+    fprintf(file, "<h4 style=\"margin: 2px 0;\">%s: %s</h4>\n", label, buf_time);
+    fprintf(file, "<br>");
 }

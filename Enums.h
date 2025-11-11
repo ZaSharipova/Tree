@@ -31,16 +31,22 @@ enum TreeErrors{
     kNodeParentChildMismatch,
     kNodeChildParentMismatch,
     kFailure,
+    kNoPossibleNode,
 };
 
 typedef struct DumpInfo {
+    Tree_t *tree;
     const char *filename_to_write_dump;
     FILE *file;
     const char *filename_to_write_graphviz;
     const char *filename_dump_made;
     char message[MAX_IMAGE_SIZE];
+    char *name;
+    char *question;
     char image_file[MAX_IMAGE_SIZE];
     size_t graph_counter;
+
+    TreeErrors error;
 } DumpInfo;
 
 #define RESET   "\033[0m"
