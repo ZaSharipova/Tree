@@ -18,6 +18,13 @@
         return err;              \
     }
 
+#define DO_OPEN_FILE_RETURN(file_name_after_open, filename, open_mode) \
+    FILE * file_name_after_open = fopen(filename, open_mode);          \
+    if (file_name_after_open == NULL) {                                \
+        perror("fopen() failed.");                                     \
+        return kErrorOpeningFile;                                      \
+    }
+
 TreeErrors TreeRootCtor(Tree_t *tree);
 TreeErrors NodeCtor(TreeNode_t **node, TreeElem_t *value);
 

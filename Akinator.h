@@ -5,7 +5,7 @@
 
 #include "Enums.h"
 
-TreeErrors NodesInsertAtTheEnd(TreeNode_t *node, char *name, char *question, size_t *size);
+TreeErrors NodesInsertAtTheEnd(TreeNode_t *node, char *name, char *question, Tree_t *tree);
 TreeErrors Akinator(Tree_t *tree, TreeNode_t *node, DumpInfo *Info);
 
 void PrintAkinatorToFile(FILE *file, TreeNode_t *node);
@@ -18,6 +18,6 @@ TreeErrors CompareResults(TreeNode_t *node, const char *value1, const char *valu
 
 
 TreeErrors DoBufRead(FILE *file, const char *filename, FileInfo *Info);
-TreeNode_t *ReadNodeFromFile(FILE *file, size_t *pos, TreeNode_t *node, TreeElem_t buffer, int *error);
+
 //TreeErrors ReadAkinatorTreeFromFilename(const char *filename, TreeNode_t **root);
 #endif //AKINATOR_H_

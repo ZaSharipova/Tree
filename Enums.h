@@ -52,19 +52,9 @@ typedef struct DumpInfo {
     TreeErrors error;
 } DumpInfo;
 
-struct LineInfo {
-    char *start_ptr;
-    char *end_ptr;
-    char *start_ptr_alpha;
-    char *end_ptr_alpha;
-    size_t size;
-};
-
 struct FileInfo {
     TreeElem_t buf_ptr;
-    LineInfo *text_ptr;
     size_t filesize;
-    int count_lines;
 };
 
 #define RESET   "\033[0m"
