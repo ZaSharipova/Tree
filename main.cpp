@@ -8,6 +8,14 @@
 #include "TreeDump.h"
 #include "Akinator.h"
 
+void printnode(TreeNode_t *node) {
+
+    if (node) {
+        printf("%s\n", node->data);
+        printnode(node->left);
+        printnode(node->right); 
+    }
+}
 int main(void) {
     TreeErrors err = kSuccess;
 
@@ -20,12 +28,30 @@ int main(void) {
     Info.file = fopen(Info.filename_to_write_dump, "w");
     Info.tree = &tree;
 
-    //ReadAkinatorTreeFromFilename("akinator_out.txt", &tree.root);
-    char *value = "No One knows";
-    INSERT_TO_TREE(value);
+    FILE *file = fopen("akinator_in.txt", "r");
+    if (file == NULL) {
+        perror("fopen() failed.");
+        return kErrorOpeningFile;
+    }
+    FileInfo FileInfo = {};
+    DoBufRead(file, "akinator_in.txt", &FileInfo);
+    size_t pos = 0;
+    int error = 0;
+    tree.root = ReadNodeFromFile(file, &pos, tree.root, FileInfo.buf_ptr, &error);
+    if (error) {
+        fprintf(stderr, "Ошибка при парсинге дерева\n");
+        return 1; // завершение программы или обработка ошибки
+    }
+    fclose(file);
+
+    // char *value = "No One knows";
+    // INSERT_TO_TREE(value);
+    printf("\n\n");
+
+    //printnode(tree.root);
     DoTreeInGraphviz((const TreeNode_t *)tree.root, &Info);
     DoDump(&Info);
-    Akinator(tree.root, tree.root, &Info);
+    CHECK_ERROR_RETURN(Akinator(tree.root, tree.root, &Info));
 
     int cnt = 0;
     CHECK_ERROR_RETURN(TreeVerify(tree.root, (int)tree.size, &cnt));
@@ -66,9 +92,9 @@ int main(void) {
     // PrintSortedNode(tree.root);
     // CheckSorting(arr_before, tree.root, arr_after, count);
 
-    FILE *file = fopen("akinator_out.txt", "w");
-    PrintAkinatorToFile(file, tree.root);
-    fclose(file);
+    FILE *file_out = fopen("akinator_out.txt", "w");
+    PrintAkinatorToFile(file_out, tree.root);
+    fclose(file_out);
     CHECK_ERROR_RETURN(TreeDtor(&tree));
     fclose(Info.file);
     return 0;
