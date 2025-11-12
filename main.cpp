@@ -51,14 +51,15 @@ int main(void) {
     //printnode(tree.root);
     DoTreeInGraphviz((const TreeNode_t *)tree.root, &Info);
     DoDump(&Info);
-    CHECK_ERROR_RETURN(Akinator(tree.root, tree.root, &Info));
+    CHECK_ERROR_RETURN(Akinator(&tree, tree.root, &Info));
 
     int cnt = 0;
     CHECK_ERROR_RETURN(TreeVerify(tree.root, (int)tree.size, &cnt));
 
     DoTreeInGraphviz(tree.root, &Info);
 
-    CHECK_ERROR_RETURN(PrintDefinition(tree.root, "Зарина", tree.size));
+    // printf("%d ", tree.size);
+    CHECK_ERROR_RETURN(DoPrintDefinition(tree.root, "Данис и Диаз", 1000));
     //CHECK_ERROR_RETURN(CompareResults(tree.root, "Зарина", "Исами", tree.size));
 
     // const char *number = "12";

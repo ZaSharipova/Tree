@@ -61,8 +61,9 @@ static bool PlayAgain(void) {
     return AskAndReturnYesNo(CONTINUE_ANSWER, sizeof(CONTINUE_ANSWER));
 }
 
-static TreeErrors AddNewCharacter(TreeNode_t *node) {
+static TreeErrors AddNewCharacter(TreeNode_t *node, size_t *size) {
     assert(node);
+    assert(size);
 
     printf(BLUE "\nОтветьте тогда, кого Вы загадывали? Введите имя (инициалы, прозвище):\n" RESET);
 
@@ -74,47 +75,47 @@ static TreeErrors AddNewCharacter(TreeNode_t *node) {
     DO_CALLOC_AND_CHECK_PROBLEM_RETURN(new_question, MAX_LINE_SIZE); 
     ReadLine(new_question);
 
-    NodesInsertAtTheEnd(node, name, new_question);
+    NodesInsertAtTheEnd(node, name, new_question, size);
     printf(MAGENTA "\nХорошо, Акинатор дополнен. Теперь в нем есть данный персонаж!\n" RESET);
     free(new_question);
 
     return kSuccess;
 }
 
-static TreeErrors DoCorrectGuess(TreeNode_t *head, TreeNode_t *node, DumpInfo *Info) {
-    assert(head);
+static TreeErrors DoCorrectGuess(Tree_t *tree, TreeNode_t *node, DumpInfo *Info) {
+    assert(tree);
     assert(node);
     assert(Info);
 
     printf(RED "\nОтлично, ответ угадан!\n" RESET);
     if (PlayAgain()) {
-        return Akinator(head, head, Info);
+        return Akinator(tree, tree->root, Info);
     }
 
     return kSuccess;
 }
 
-static TreeErrors DoWrongGuess(TreeNode_t *head, TreeNode_t *node, DumpInfo *Info) {
+static TreeErrors DoWrongGuess(Tree_t *tree, TreeNode_t *node, DumpInfo *Info) {
+    assert(tree);
     assert(node);
-    assert(head);
     assert(Info);
 
-    AddNewCharacter(node);
+    AddNewCharacter(node, &tree->size);
 
     Info->question = node->data;
     Info->name = node->left->data;
-    DoTreeInGraphviz((const TreeNode_t *)head, Info);
+    DoTreeInGraphviz((const TreeNode_t *)tree->root, Info);
     DoDump(Info);
             
     if (PlayAgain()) {
-        return Akinator(head, head, Info);
+        return Akinator(tree, tree->root, Info);
     }
 
     return kSuccess;
 }
 
-TreeErrors Akinator(TreeNode_t *head, TreeNode_t *node, DumpInfo *Info) {
-    assert(head);
+TreeErrors Akinator(Tree_t *tree, TreeNode_t *node, DumpInfo *Info) {
+    assert(tree);
     assert(node);
     assert(Info);
 
@@ -129,9 +130,9 @@ TreeErrors Akinator(TreeNode_t *head, TreeNode_t *node, DumpInfo *Info) {
         yes = AskYesNo(question);
         if (!node->left && !node->right) {
             if (yes) {
-                return DoCorrectGuess(head, node, Info);
+                return DoCorrectGuess(tree, node, Info);
             } else {
-                return DoWrongGuess(head, node, Info);
+                return DoWrongGuess(tree, node, Info);
             }
         } else {
             if (yes) {
@@ -158,10 +159,11 @@ TreeErrors Akinator(TreeNode_t *head, TreeNode_t *node, DumpInfo *Info) {
     return kSuccess;
 }
 
-TreeErrors NodesInsertAtTheEnd(TreeNode_t *node, char *name, char *question) {
+TreeErrors NodesInsertAtTheEnd(TreeNode_t *node, char *name, char *question, size_t *size) {
     assert(node);
     assert(name);
     assert(question);
+    assert(size);
 
     TreeNode_t *new_node_left = NULL;
     NodeCtor(&new_node_left, &name);
@@ -173,6 +175,7 @@ TreeErrors NodesInsertAtTheEnd(TreeNode_t *node, char *name, char *question) {
     node->right = new_node_right;
     new_node_left->parent = node;
     new_node_right->parent = node;
+    (*size)++;
 
     // size_t len = strlen(question) + 2;
     // DO_CALLOC_AND_CHECK_PROBLEM_RETURN(new_question, len);
@@ -200,13 +203,13 @@ void PrintAkinatorToFile(FILE *file, TreeNode_t *node) {
     if (node->left) {
         PrintAkinatorToFile(file, node->left);
     } else {
-        fprintf(file, " nill");
+        fprintf(file, " nil");
     }
 
     if (node->right) {
         PrintAkinatorToFile(file, node->right);
     } else {
-        fprintf(file, " nill");
+        fprintf(file, " nil");
     }
 
     fprintf(file, ")");
@@ -232,8 +235,39 @@ TreeErrors FindAkinatorNodeAddress(TreeNode_t *node, const char *value, TreeNode
     return kFailure;
 }
 
+TreeErrors PrintDefinition(TreeNode_t *current, TreeNode_t *prev,
+                           char *definition_str, size_t buffer_len) {
+    assert(current);
+    assert(prev);
+    assert(definition_str);
 
-TreeErrors PrintDefinition(TreeNode_t *node, const char *value, size_t count) {
+    if (current->parent) {
+        PrintDefinition(current->parent, current, definition_str, buffer_len);
+    }
+
+    const char *text = NULL;
+    if (prev == current->left) {
+        text = current->data;
+    } else if (prev == current->right) {
+        static char buf[256];
+        snprintf(buf, sizeof(buf), "не %s", current->data);
+        text = buf;
+    }
+
+    if (text) {
+        if (definition_str[0] != '\0' && (current->left || current->right)) {
+            strncat(definition_str, ", ", buffer_len - strlen(definition_str) - 1);
+        }
+        strncat(definition_str, text, buffer_len - strlen(definition_str) - 1);
+        printf("%s", text);
+        if ((current->left || current->right) && current->parent) printf(", ");
+    }
+
+    return kSuccess;
+}
+
+
+TreeErrors DoPrintDefinition(TreeNode_t *node, const char *value, size_t buffer_len) {
     assert(node);
     assert(value);
 
@@ -241,57 +275,40 @@ TreeErrors PrintDefinition(TreeNode_t *node, const char *value, size_t count) {
     FindAkinatorNodeAddress(node, value, &address);
 
     if (!address) {
-        printf("%s address not found.", value);
+        printf("%s address not found.\n", value);
         return kNoSuchNode;
     }
+
     printf("===========DEFINITION===========\n");
     printf("%s - address: %p\nDefinition: ", value, address);
 
-
-    char **array_of_definitions = (char **) calloc (count * 2 + 1, sizeof(char *));
-    if (!array_of_definitions) {
-        fprintf(stderr, "No memory for calloc array of definitions.\n");
+    char *definition_str = (char *) calloc (buffer_len, sizeof(char));
+    if (!definition_str) {
+        fprintf(stderr, "No memory for definition string\n");
         return kNoMemory;
     }
 
-    size_t pos = 0;
-    TreeNode_t *current = address->parent;
-    TreeNode_t *prev = address;
-    while (current) {
-        if (prev) {
-            if (current->left == prev) {
-                array_of_definitions[pos++] = current->data;
-
-            } else if (current->right == prev) {
-                size_t len = strlen(current->data) * 4 + 4;
-                DO_CALLOC_AND_CHECK_PROBLEM_RETURN(negated, len);
-
-                snprintf(negated, len, "не %s", current->data);
-                array_of_definitions[pos++] = negated;
-            }
-        }
-
-        prev = current;
-        current = current->parent;
+    if (address->parent) {
+        PrintDefinition(address->parent, address, definition_str, buffer_len);
+    } else {
+        strcpy(definition_str, value);
     }
 
-    for (int i = (int)pos - 1; i >= 0; i--) {
-        printf("%s", array_of_definitions[i]);
-        if (i > 0) printf(" -> ");
-    }
-    printf("\n");
+    printf("\n================================\n");
 
-    printf("================================");
+    size_t size_of_command = buffer_len + strlen(value) + 5;
+    char *command = (char *) calloc(size_of_command, sizeof(char));
+    snprintf(command, size_of_command, "say \"%s - это %s\"", value, definition_str);
+    fprintf(stderr, "Running command: %s\n", command);
+    int ret = system(command);
+    fprintf(stderr, "Return code: %d\n", ret);
 
-    for (size_t i = 0; i < pos; ++i) {
-        if (strncmp(array_of_definitions[i], "не ", sizeof("не ")) == 0) {
-            free(array_of_definitions[i]);
-        }
-    }
-
-    free(array_of_definitions);
+    free(definition_str);
+    free(command);
     return kSuccess;
 }
+
+
 
 // TreeErrors CompareResults(TreeNode_t *node, const char *value1, const char *value2, int count) {
 //     assert(node);
@@ -553,14 +570,14 @@ TreeElem_t ReadTitle(TreeElem_t buffer, size_t *pos) {
         return NULL;
     }
     
-    int result = sscanf(buffer + *pos, "\"%255[^\"]\"%n", tmp, &cnt);
+    int result = sscanf(buffer + *pos, "\"%*[^\"]\"%n", &cnt);
     
-    if (result != 1) {
+    printf("%s %d ", buffer + *pos, cnt);
+    if (result < 0) {
         fprintf(stderr, "Syntax error: Failed to read quoted string at position %zu\n", *pos);
         return NULL;
     }
     
-    // printf("%d ", cnt);
     buffer[*pos + cnt - 1] = '\0';
     TreeElem_t start_ptr = buffer + *pos + 1;
     *pos += cnt;

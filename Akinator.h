@@ -5,11 +5,15 @@
 
 #include "Enums.h"
 
-TreeErrors NodesInsertAtTheEnd(TreeNode_t *node, char *name, char *question);
-TreeErrors Akinator(TreeNode_t *head, TreeNode_t *node, DumpInfo *Info);
+TreeErrors NodesInsertAtTheEnd(TreeNode_t *node, char *name, char *question, size_t *size);
+TreeErrors Akinator(Tree_t *tree, TreeNode_t *node, DumpInfo *Info);
 
 void PrintAkinatorToFile(FILE *file, TreeNode_t *node);
-TreeErrors PrintDefinition(TreeNode_t *node, const char *value, size_t count);
+
+TreeErrors DoPrintDefinition(TreeNode_t *node, const char *value, size_t count);
+TreeErrors PrintDefinition(TreeNode_t *current, TreeNode_t *prev, char **array_of_definitions, size_t *pos);
+TreeErrors SayDefinition(char **array_of_definitions, size_t count);
+
 TreeErrors CompareResults(TreeNode_t *node, const char *value1, const char *value2, int count);
 
 
