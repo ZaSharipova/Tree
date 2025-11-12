@@ -4,6 +4,7 @@
 #include <stdio.h>
 
 #include "Enums.h"
+#include "Structs.h"
 
 TreeErrors NodesInsertAtTheEnd(TreeNode_t *node, char *name, char *question, Tree_t *tree);
 TreeErrors Akinator(Tree_t *tree, TreeNode_t *node, DumpInfo *Info);

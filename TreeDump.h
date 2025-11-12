@@ -4,6 +4,7 @@
 #include <stdio.h>
 
 #include "Enums.h"
+#include "Structs.h"
 
 void DoDump(DumpInfo *Info);
 

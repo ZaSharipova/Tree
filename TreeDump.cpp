@@ -5,6 +5,7 @@
 #include <time.h>
 
 #include "Enums.h"
+#include "Structs.h"
 #include "TreeGraph.h"
 
 #define MAX_STRING_SIZE 60
@@ -19,9 +20,11 @@ void DoDump(DumpInfo *Info) {
     }
     FILE *file = Info->file;
 
-    if (Info->name && Info->question) fprintf(file, "<h2>DUMP new character with question: <font color = orange> %s?</font>, and name: <font color = orange> %s</font> </h2>\n", 
+    if (Info->name && Info->question) {
+
+       fprintf(file, "<h2>DUMP new character with question: <font color = orange> %s?</font>, and name: <font color = orange> %s</font> </h2>\n", 
         Info->question, Info->name);
-    else {
+    } else {
         fprintf(file, "<h2> DUMP</h2>");
     }
     PrintCurrentTime(file, "made");

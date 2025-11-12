@@ -5,6 +5,7 @@
 #include <stdbool.h>
 
 #include "Enums.h"
+#include "Structs.h"
 
 #define MAX_ARR_SIZE 23
 

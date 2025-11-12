@@ -4,6 +4,7 @@
 #include <stdio.h>
 
 #include "Enums.h"
+#include "Structs.h"
 
 void PrintDotNode(FILE *file, const TreeNode_t *node);
 void DoTreeInGraphviz(const TreeNode_t *tree, DumpInfo *Info);

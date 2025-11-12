@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 #include "Enums.h"
+#include "Structs.h"
 
 // void PrintDotNode(FILE *file, const TreeNode_t *node) {
 //     assert(file);

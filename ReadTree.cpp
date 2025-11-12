@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include "Enums.h"
+#include "Structs.h"
 #include "TreeFunctions.h"
 
 long long SizeOfFile(const char *filename) {

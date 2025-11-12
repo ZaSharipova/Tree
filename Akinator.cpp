@@ -6,9 +6,11 @@
 #include <stdlib.h>
 
 #include "Enums.h"
+#include "Structs.h"
 #include "TreeFunctions.h"
 #include "TreeGraph.h"
 #include "TreeDump.h"
+
 
 #define MAX_LINE_SIZE 30
 #define MAX_LINE_SPECIFIER "29"
@@ -42,30 +44,41 @@ static void ReadLine(char *answer) {
     while ((char_symbol = getchar()) != '\n' && char_symbol != EOF);
 }
 
-static bool AskAndReturnYesNo(const char *type_of_answer, int size_of_line) {
-    assert(type_of_answer);
+static TypeOfAnswer AskAndReturnYesNo(const char *type_of_answer_yes, const char *type_of_answer_no) {
+    assert(type_of_answer_yes);
+    assert(type_of_answer_no);
 
-    DO_CALLOC_AND_CHECK_PROBLEM_RETURN(answer, MAX_LINE_SIZE);
+    char *answer = (char *) calloc (MAX_LINE_SIZE, sizeof(char));
+    if (!answer) {
+        fprintf(stderr, "No memory in calloc.\n");
+        return kWrong;
+    }
+    //DO_CALLOC_AND_CHECK_PROBLEM_RETURN(answer, MAX_LINE_SIZE);
     ReadLine(answer);
 
-    bool flag = false;
-    flag = strncmp(answer, type_of_answer, (size_t)size_of_line) == 0;
+    TypeOfAnswer flag = kWrong;
+    if (strncmp(answer, type_of_answer_yes, strlen(type_of_answer_yes)) == 0) {
+        flag = kYes;
+    } else if (strncmp(answer, type_of_answer_no, strlen(type_of_answer_no)) == 0) {
+        flag = kNo;
+    }
+
     free(answer);
 
     return flag;
 }
 
-static bool AskYesNo(const char *question) {
+static TypeOfAnswer AskYesNo(const char *question) {
     assert(question);
 
     printf(YELLOW "\nЭто %s? (" YES_ANSWER"/" NO_ANSWER"):\n" RESET, question);
-    return AskAndReturnYesNo(YES_ANSWER, sizeof(YES_ANSWER));
+    return AskAndReturnYesNo(YES_ANSWER, NO_ANSWER);
 }
 
-static bool PlayAgain(void) {
+static TypeOfAnswer PlayAgain(void) {
 
     printf(GREEN "\nЕсли хотите сыграть еще раз, введите CONT, иначе QUIT:\n" RESET);
-    return AskAndReturnYesNo(CONTINUE_ANSWER, sizeof(CONTINUE_ANSWER));
+    return AskAndReturnYesNo(CONTINUE_ANSWER, QUIT_ANSWER);
 }
 
 static TreeErrors AddNewCharacter(TreeNode_t *node, Tree_t *tree) {
@@ -95,7 +108,7 @@ static TreeErrors DoCorrectGuess(Tree_t *tree, TreeNode_t *node, DumpInfo *Info)
     assert(Info);
 
     printf(RED "\nОтлично, ответ угадан!\n" RESET);
-    if (PlayAgain()) {
+    if (PlayAgain() == kYes) {
         return Akinator(tree, tree->root, Info);
     }
 
@@ -114,7 +127,7 @@ static TreeErrors DoWrongGuess(Tree_t *tree, TreeNode_t *node, DumpInfo *Info) {
     DoTreeInGraphviz((const TreeNode_t *)tree->root, Info);
     DoDump(Info);
             
-    if (PlayAgain()) {
+    if (PlayAgain() == kYes) {
         return Akinator(tree, tree->root, Info);
     }
 
@@ -137,27 +150,31 @@ TreeErrors Akinator(Tree_t *tree, TreeNode_t *node, DumpInfo *Info) {
         yes_flag = AskYesNo(question);
 
         if (!node->left && !node->right) {
-            if (yes_flag) {
+            if (yes_flag == kYes) {
                 return DoCorrectGuess(tree, node, Info);
-            } else {
+            } else if (yes_flag == kNo){
                 return DoWrongGuess(tree, node, Info);
+            } else {
+                return kFailure;
             }
 
         } else {
-            if (yes_flag) {
+            if (yes_flag == kYes) {
                 if (node->left) {
                     node = node->left;
                 } else {
                     fprintf(stderr, "Ошибка: нет левого узла для ответа 'да'.\n");
                     return kNoPossibleNode;
                 }
-            } else {
+            } else if (yes_flag == kNo) {
                 if (node->right) {
                     node = node->right;
                 } else {
                     fprintf(stderr, "Ошибка: нет правого узла для ответа 'нет'.\n");
                     return kNoPossibleNode;
                 }
+            } else {
+                return kFailure;
             }
         }
     }

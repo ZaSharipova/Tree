@@ -4,6 +4,7 @@
 
 #include "TreeFunctions.h"
 #include "Enums.h"
+#include "Structs.h"
 #include "TreeGraph.h"
 #include "TreeDump.h"
 #include "Akinator.h"
@@ -36,7 +37,7 @@ int main(void) {
     TreeNode_t *new_node = NULL;
     CHECK_ERROR_RETURN(ReadNodeFromFile(file_in, file_log, &pos, tree.root, FileInfo.buf_ptr, &new_node));
     tree.root = new_node;
-    
+
     fclose(file_in);
     fclose(file_log);
 

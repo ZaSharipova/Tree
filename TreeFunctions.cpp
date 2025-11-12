@@ -4,7 +4,8 @@
 #include <assert.h>
 #include <string.h>
 
-#include "Enums.h"             
+#include "Enums.h"  
+#include "Structs.h"           
 
 TreeErrors TreeRootCtor(Tree_t *tree) {
     assert(tree);
@@ -120,17 +121,18 @@ void PrintSortedNode(const TreeNode_t *node) {
     printf(") ");
 }
 
-void SortNodeToArray(const TreeNode_t *node, TreeElem_t *arr_after, int *i) {
+void SortNodeToArray(const TreeNode_t *node, TreeElem_t *arr_after, int *pos) {
     assert(node);
     assert(arr_after);
+    assert(pos);
 
     if (node->left) {
-        SortNodeToArray(node->left, arr_after, i);
+        SortNodeToArray(node->left, arr_after, pos);
     }
-    arr_after[(*i)++] = node->data;
+    arr_after[(*pos)++] = node->data;
 
     if (node->right) {
-        SortNodeToArray(node->right, arr_after, i);
+        SortNodeToArray(node->right, arr_after, pos);
     }
 }
 
@@ -217,6 +219,8 @@ TreeErrors TreeVerify(const TreeNode_t *head, int size, int *cnt) {
 }
 
 TreeErrors NodeVerify(const TreeNode_t *node) {
+    assert(node);
+
     if (node == NULL) {
         return kNodeNullPointer;
     }
