@@ -72,8 +72,6 @@ TreeElem_t ReadTitle(FILE *logfile, TreeElem_t buffer, size_t *pos) {
     assert(logfile);
     assert(buffer);
     assert(pos);
-
-    int cnt = 0;
     
     SkipSpaces(buffer, pos);
     
@@ -82,12 +80,13 @@ TreeElem_t ReadTitle(FILE *logfile, TreeElem_t buffer, size_t *pos) {
         return NULL;
     }
     
+    int cnt = 0;
     int result = sscanf(buffer + *pos, "\"%*[^\"]\"%n", &cnt);
-    fprintf(logfile, "%d %s", cnt, buffer + *pos);
     if (result < 0) {
         fprintf(stderr, "Syntax error: Failed to read quoted string at position %zu\n", *pos);
         return NULL;
     }
+    fprintf(logfile, "%d %s", cnt, buffer + *pos);
     
     buffer[*pos + (size_t)cnt - 1] = '\0';
     TreeElem_t start_ptr = buffer + *pos + 1;
@@ -96,14 +95,14 @@ TreeElem_t ReadTitle(FILE *logfile, TreeElem_t buffer, size_t *pos) {
     return start_ptr;
 }
 
-TreeNode_t *ReadNodeFromFile(FILE *file, FILE *logfile, size_t *pos, TreeNode_t *node, TreeElem_t buffer, int *error) {
+TreeErrors ReadNodeFromFile(FILE *file, FILE *logfile, size_t *pos, TreeNode_t *node, TreeElem_t buffer, TreeNode_t **node_to_add) {
     assert(file);
     assert(logfile);
     //assert(node);
     assert(pos);
-    assert(error);
+    //assert(node_to_add);
 
-    *error = 0;
+    TreeErrors err = kSuccess;
     SkipSpaces(buffer, pos);
 
     if (buffer[*pos] == '(') {
@@ -114,31 +113,34 @@ TreeNode_t *ReadNodeFromFile(FILE *file, FILE *logfile, size_t *pos, TreeNode_t 
         new_node->parent = node;
 
         SkipSpaces(buffer, pos);
-        new_node->left = ReadNodeFromFile(file, logfile, pos, new_node, buffer, error);
-        if (*error) return NULL;
+        TreeNode_t *left_child = NULL;
+        CHECK_ERROR_RETURN(ReadNodeFromFile(file, logfile, pos, new_node, buffer, &left_child));
+        new_node->left = left_child;
 
         SkipSpaces(buffer, pos);
-        new_node->right = ReadNodeFromFile(file, logfile, pos, new_node, buffer, error);
-        if (*error) return NULL;
+        TreeNode_t *right_child = NULL;
+        CHECK_ERROR_RETURN(ReadNodeFromFile(file, logfile, pos, new_node, buffer, &right_child));
+        new_node->right = right_child;
 
         if (buffer[*pos] == ')') {
             buffer[*pos] = '\0';
             (*pos)++;
         } else {
             fprintf(stderr, "Syntax error: expected ')'\n");
-            *error = 1;
-            return NULL;
+            return kSyntaxError;
         }
-
-        return new_node;
+        *node_to_add = new_node;
+        return kSuccess;
 
     } else if (strncmp(buffer + *pos, "nil", sizeof("nil") - 1) == 0) {
         *pos += strlen("nil");
-        return NULL;
+        *node_to_add = NULL;
+        return kSuccess;
 
     } else {
         fprintf(stderr, "Syntax error in %zu %c", *pos, buffer[*pos]);
-        *error = 1;
-        return NULL;
+        return kSyntaxError;
     }
+
+    return kSuccess;
 }

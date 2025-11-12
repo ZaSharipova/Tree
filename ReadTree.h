@@ -4,6 +4,6 @@
 #include <stdio.h>
 #include "Enums.h"
 
-TreeNode_t *ReadNodeFromFile(FILE *file, FILE *logfile, size_t *pos, TreeNode_t *node, TreeElem_t buffer, int *error);
+TreeErrors ReadNodeFromFile(FILE *file, FILE *logfile, size_t *pos, TreeNode_t *node, TreeElem_t buffer, TreeNode_t **node_to_add);
 
 #endif //READ_TREE_H_

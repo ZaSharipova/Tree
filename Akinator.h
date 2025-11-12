@@ -10,11 +10,11 @@ TreeErrors Akinator(Tree_t *tree, TreeNode_t *node, DumpInfo *Info);
 
 void PrintAkinatorToFile(FILE *file, TreeNode_t *node);
 
-TreeErrors DoPrintDefinition(TreeNode_t *node, const char *value, size_t count);
-TreeErrors PrintDefinition(TreeNode_t *current, TreeNode_t *prev, char **array_of_definitions, size_t *pos);
+TreeErrors DoPrintDefinition(TreeNode_t *node, const char *value, size_t tree_size, size_t count);
+TreeErrors PrintDefinition(TreeNode_t *current, TreeNode_t *prev, char *definition_str, size_t buffer_len, int *pos_in_phrases);
 TreeErrors SayDefinition(char **array_of_definitions, size_t count);
 
-TreeErrors CompareResults(TreeNode_t *node, const char *value1, const char *value2, int count);
+TreeErrors CompareNames(TreeNode_t *head, const char *value1, const char *value2);
 
 
 TreeErrors DoBufRead(FILE *file, const char *filename, FileInfo *Info);

@@ -35,6 +35,7 @@ enum TreeErrors{
     kErrorOpeningFile,
     kErrorClosingFile,
     kErrorStat,
+    kSyntaxError,
 };
 
 typedef struct DumpInfo {

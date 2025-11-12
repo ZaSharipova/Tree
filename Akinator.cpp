@@ -24,6 +24,15 @@
         return kNoMemory;                                               \
     }
 
+const char *AndPhrases[] = {
+    "и",
+    "а также",
+    "более того",
+    "еще",
+    "к тому же",
+    "плюс",
+};
+#define AndPhasesSize sizeof(AndPhrases)/sizeof(AndPhrases[0])
 
 static void ReadLine(char *answer) {
     assert(answer);
@@ -233,23 +242,29 @@ TreeErrors FindAkinatorNodeAddress(TreeNode_t *node, const char *value, TreeNode
     return kFailure;
 }
 
-TreeErrors PrintDefinition(TreeNode_t *current, TreeNode_t *prev, char *definition_str, size_t buffer_len) {
+TreeErrors PrintDefinition(TreeNode_t *current, TreeNode_t *prev, char *definition_str, size_t buffer_len, size_t *pos_in_phrases) {
     assert(current);
     assert(prev);
     assert(definition_str);
+    assert(pos_in_phrases);
+
+    static int pos = 1;
 
     if (current->parent) {
-        PrintDefinition(current->parent, current, definition_str, buffer_len);
+        PrintDefinition(current->parent, current, definition_str, buffer_len, pos_in_phrases);
     }
 
-    const char *text = NULL;
+    char *text = NULL;
+    char buf[MAX_LINE_SIZE] = {};
     
     if (prev == current->left) {
-        text = current->data;
+        pos = (pos + 1) % AndPhasesSize;
+        snprintf(buf, sizeof(buf), "%s %s", AndPhrases[pos], current->data);
+        text = buf;
 
     } else if (prev == current->right) {
-        static char buf[MAX_LINE_SIZE] = {};
-        snprintf(buf, sizeof(buf), "не %s", current->data);
+        pos = (pos + 1) % AndPhasesSize;
+        snprintf(buf, sizeof(buf), "%s не %s", AndPhrases[pos], current->data);
         text = buf;
     }
 
@@ -266,7 +281,7 @@ TreeErrors PrintDefinition(TreeNode_t *current, TreeNode_t *prev, char *definiti
 }
 
 
-TreeErrors DoPrintDefinition(TreeNode_t *node, const char *value, size_t buffer_len) {
+TreeErrors DoPrintDefinition(TreeNode_t *node, const char *value, size_t tree_size, size_t buffer_len) {
     assert(node);
     assert(value);
 
@@ -283,13 +298,14 @@ TreeErrors DoPrintDefinition(TreeNode_t *node, const char *value, size_t buffer_
 
     DO_CALLOC_AND_CHECK_PROBLEM_RETURN(definition_str, buffer_len);
 
+    size_t pos = 0;
     if (address->parent) {
-        PrintDefinition(address->parent, address, definition_str, buffer_len);
+        PrintDefinition(address->parent, address, definition_str, buffer_len, &pos);
     }
 
     printf("\n==================================\n");
 
-    size_t size_of_command = buffer_len + strlen(value) + strlen(" - это ");
+    size_t size_of_command = buffer_len + strlen(value) + strlen(" - это ") + tree_size * 11;
     DO_CALLOC_AND_CHECK_PROBLEM_RETURN(command, size_of_command);
 
     snprintf(command, size_of_command, "say \"%s - это %s\"", value, definition_str);
@@ -302,7 +318,108 @@ TreeErrors DoPrintDefinition(TreeNode_t *node, const char *value, size_t buffer_
     return kSuccess;
 }
 
+static int FindDepth(TreeNode_t *node) {
+    assert(node);
 
+    int depth = 0;
+    while (node) {
+        depth++;
+        node = node->parent;
+    }
+    return depth;
+}
+
+TreeNode_t *FindClosestSameNode(TreeNode_t *node1, TreeNode_t *node2) {
+    assert(node1);
+    assert(node2);
+
+    int depth1 = FindDepth(node1);
+    int depth2 = FindDepth(node2);
+
+    while (depth1 > depth2) { 
+        node1 = node1->parent; 
+        depth1--; 
+    }
+    while (depth2 > depth1) { 
+        node2 = node2->parent; 
+        depth2--; 
+    }
+
+    while (node1 != node2) {
+        node1 = node1->parent;
+        node2 = node2->parent;
+    }
+
+    return node1;
+}
+
+TreeErrors PrintSimpleDefinition(TreeNode_t *node) {
+    assert(node);
+
+    if (node->parent) {
+        PrintSimpleDefinition(node->parent);
+    }
+
+    if (node->parent && node->parent->left == node) {
+        printf("%s, ", node->data);
+    } else if (node->parent && node->parent->right == node) {
+        printf("не %s, ", node->data);
+    }
+
+    if (!node->parent) {
+        printf("%s, ", node->data);
+    }
+
+    return kSuccess;
+}
+
+TreeErrors CompareNames(TreeNode_t *head, const char *value1, const char *value2) {
+    assert(head);
+    assert(value1);
+    assert(value2);
+
+    TreeErrors err = kSuccess;
+    TreeNode_t *node1 = NULL;
+    CHECK_ERROR_RETURN(FindAkinatorNodeAddress(head, value1, &node1));
+
+    TreeNode_t *node2 = NULL;
+    CHECK_ERROR_RETURN(FindAkinatorNodeAddress(head, value2, &node2));
+
+    TreeNode_t *same_parent = FindClosestSameNode(node1, node2);
+
+    TreeNode_t *node = same_parent;
+    printf("==================Names=Comparison==============\n");
+    printf("%s и %s похожи в: ", value1, value2);
+    if (node->parent) {
+        PrintSimpleDefinition(node->parent);
+    }
+    // if (node->parent || node == head) {
+    //     while (node->parent && node != same_parent) {
+    //         node = node->parent;
+    //         printf("%s, ", node->data);
+    //     }
+    // }
+
+
+    printf("\nНо %s — ", value1);
+
+    if (node1->parent == same_parent->parent) {
+        printf("%s", node1 == same_parent->left ? same_parent->left->data : node1->data);
+    } else if (node1 == same_parent->right) {
+        printf("не %s", same_parent->data);
+    } else {
+        printf("%s", node1->data);
+    }
+
+    printf(", а %s — ", value2);
+    if (node2 == same_parent->right->parent) {
+        printf("не %s", same_parent->data);
+    } else
+        printf("%s", node2->data);
+
+    printf(".\n==================================\n");
+    return kSuccess;
+}
 
 // TreeErrors CompareResults(TreeNode_t *node, const char *value1, const char *value2, int count) {
 //     assert(node);

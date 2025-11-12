@@ -33,11 +33,10 @@ int main(void) {
     size_t pos = 0;
     int error = 0;
     DO_OPEN_FILE_RETURN(file_log, "logfile_for_read.txt", "w");
-    tree.root = ReadNodeFromFile(file_in, file_log, &pos, tree.root, FileInfo.buf_ptr, &error);
-    if (error) {
-        fprintf(stderr, "Error parsing tree.\n");
-        return kFailure;
-    }
+    TreeNode_t *new_node = NULL;
+    CHECK_ERROR_RETURN(ReadNodeFromFile(file_in, file_log, &pos, tree.root, FileInfo.buf_ptr, &new_node));
+    tree.root = new_node;
+    
     fclose(file_in);
     fclose(file_log);
 
@@ -50,8 +49,8 @@ int main(void) {
 
     DoTreeInGraphviz(tree.root, &Info);
 
-    CHECK_ERROR_RETURN(DoPrintDefinition(tree.root, "Зарина", pos));
-    //CHECK_ERROR_RETURN(CompareResults(tree.root, "Зарина", "Исами", tree.size));
+    CHECK_ERROR_RETURN(DoPrintDefinition(tree.root, "Зарина", tree.size, pos));
+    CHECK_ERROR_RETURN(CompareNames(tree.root, "Зарина", "Иван"));
 
     DO_OPEN_FILE_RETURN(file_out, "akinator_out.txt", "w");
     PrintAkinatorToFile(file_out, tree.root);
