@@ -27,19 +27,9 @@ int main(void) {
     Info.tree = &tree;
 
     DO_OPEN_FILE_RETURN(file_in, "akinator_out.txt", "r");
-    
     FileInfo FileInfo = {};
-    // DoBufRead(file_in, "akinator_in.txt", &FileInfo);
 
     size_t pos = 0;
-    // DO_OPEN_FILE_RETURN(file_log, "logfile_for_read.txt", "w");
-    // TreeNode_t *new_node = NULL;
-    // CHECK_ERROR_RETURN(ReadNodeFromFile(&tree, file_in, file_log, &pos, tree.root, FileInfo.buf_ptr, &new_node));
-    // tree.root = new_node;
-
-    // fclose(file_in);
-    // fclose(file_log);
-
     CHECK_ERROR_RETURN(AskAndDoFileRead(&tree, &Info, &FileInfo, file_in));
     // CHECK_ERROR_RETURN(Akinator(&tree, tree.root, &Info));
 

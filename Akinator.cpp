@@ -328,8 +328,6 @@ TreeErrors DoPrintDefinition(TreeNode_t *node, const char *value, size_t tree_si
 
     printf("\n==================================\n");
 
-    // printf("%d", size_of_command);
-    // printf(" %d", sizeof("say - \" Зарина - это и человек, а также не мужчи\""));
     DO_CALLOC_AND_CHECK_PROBLEM_RETURN(command, size_of_command);
 
     snprintf(command, size_of_command, "say \"%s - это %s\"", value, definition_str);
@@ -381,7 +379,7 @@ TreeErrors PrintSimpleDefinition(TreeNode_t *node) {
     assert(node);
 
     if (node->parent) {
-        PrintSimpleDefinition(node->parent);
+       PrintSimpleDefinition(node->parent);
     }
 
     if (node->parent && node->parent->left == node) {
@@ -392,6 +390,98 @@ TreeErrors PrintSimpleDefinition(TreeNode_t *node) {
 
     if (!node->parent) {
         printf("%s, ", node->data);
+    }
+
+    return kSuccess;
+}
+
+void FillPath(TreeNode_t *node, Stack_Info *path) {
+    assert(node);
+    assert(path);
+
+    for (TreeNode_t *cur = node; cur; cur = cur->parent) {
+        StackPush(path, cur, stderr);
+    }
+}
+
+TreeErrors PrintSameCharacteristics(TreeNode_t *node1, TreeNode_t *node2, Stack_Info *path1, 
+    Stack_Info *path2, TreeNode_t **cur1, TreeNode_t **cur2) {
+    assert(node1);
+    assert(node2);
+    assert(path1);
+    assert(path2);
+    assert(cur1);
+    assert(cur2);
+
+    TreeNode_t *next1 = NULL;
+    TreeNode_t *next2 = NULL;
+
+    int cnt = 0;
+    while (path1->size > 1 && path2->size > 1) {
+        StackPop(path1, cur1, stderr);
+        StackPop(path2, cur2, stderr);
+
+        if (*cur1 == *cur2) {
+            StackPop(path1, &next1, stderr);
+            StackPop(path2, &next2, stderr);
+            if (next1 == next2) {
+                if (cnt++ < 1) {
+                    printf("%s", (*cur1)->data);
+                } else printf(", %s", (*cur1)->data);
+                StackPush(path1, next1, stderr);
+                StackPush(path2, next2, stderr);
+            } else {
+                StackPush(path1, next1, stderr);
+                StackPush(path2, next2, stderr);
+                return kSuccess;
+            }
+        } else {
+            StackPush(path1, *cur1, stderr);
+            StackPush(path2, *cur2, stderr);
+            return kSuccess;
+        }
+    }
+
+    return kSuccess;
+}
+
+bool CheckRight(TreeNode_t *last, Stack_Info *path) {
+    assert(last);
+    assert(path);
+
+    TreeNode_t *node_following = NULL;
+    StackPop(path, &node_following, stderr);
+    StackPush(path, node_following, stderr);
+    if (last->right == node_following) {
+        return true;
+    }
+    return false;
+}
+
+TreeErrors PrintDifferentCharacteristics(TreeNode_t *cur, Stack_Info *path, const char *value) {
+    assert(cur);
+    assert(path);
+    assert(value);
+
+    TreeNode_t *last_common = cur;
+    printf("\n%s — ", value);
+
+    if (CheckRight(last_common, path)) printf("не ");
+    printf("%s", last_common->data);
+    if (path->size > 1) {
+        printf(",");
+    }
+
+    while (path->size > 1) {
+        last_common = cur;
+        StackPop(path, &cur, stderr);
+        if (CheckRight(cur, path)) {
+            printf(" не");
+        } 
+        printf(" %s", cur->data);
+        if (path->size > 1) {
+            printf(",");
+        }
     }
 
     return kSuccess;
@@ -416,67 +506,22 @@ TreeErrors CompareNames(TreeNode_t *head, const char *value1, const char *value2
     if (StackCtor(&path1, 4, stderr) != kSuccessS || StackCtor(&path2, 4, stderr) != kSuccessS) {
         return kNoMemory;
     }
-
-    for (TreeNode_t *cur = node1; cur; cur = cur->parent)
-        StackPush(&path1, cur, stderr);
-
-    for (TreeNode_t *cur = node2; cur; cur = cur->parent)
-        StackPush(&path2, cur, stderr);
+    FillPath(node1, &path1);
+    FillPath(node2, &path2);
 
     TreeNode_t *cur1 = NULL;
     TreeNode_t *cur2 = NULL;
-    TreeNode_t *next1 = NULL;
-    TreeNode_t *next2 = NULL;
-    TreeNode_t *last_common = NULL;
 
     printf("==================Names Comparison==============\n");
-    printf("%s и %s похожи в: ", value1, value2);
+    printf("%s и %s похожи таким образом: ", value1, value2);
 
-    while (path1.size > 0 && path2.size > 0) {
-        StackPop(&path1, &cur1, stderr);
-        StackPop(&path2, &cur2, stderr);
+    PrintSameCharacteristics(node1, node2, &path1, &path2, &cur1, &cur2);
 
-        if (cur1 == cur2) {
-            StackPop(&path1, &next1, stderr);
-            StackPop(&path2, &next2, stderr);
-            if (next1 == next2) {
-                printf("%s, ", cur1->data);
-            } else {
-                StackPush(&path1, next1, stderr);
-                StackPush(&path2, next2, stderr);
-                break;
-            }
-        } else {
-            StackPush(&path1, cur1, stderr);
-            StackPush(&path2, cur2, stderr);
-            break;
-        }
-    }
+    printf(",\n\nPазличаются таким образом:\n");
+    PrintDifferentCharacteristics(cur1, &path1, value1);
+    PrintDifferentCharacteristics(cur2, &path2, value2);
 
-    last_common = cur1;
-    printf("\nНо %s — ", value1);
-    printf("%s ", last_common->data);
-    while (path1.size > 1) {
-        StackPop(&path1, &cur1, stderr);
-        if (cur1->parent && cur1->parent->right != cur1) {
-            printf("не %s ", cur1->data);
-        } else {
-            printf("%s ", cur1->data);
-        }
-    }
-
-    printf(", а %s — ", value2);
-    printf("не %s ", last_common->data);
-    while (path2.size > 1) {
-        StackPop(&path2, &cur2, stderr);
-        if (cur2->parent && cur2->parent->right != cur2) {
-            printf("не %s ", cur2->data);
-        } else {
-            printf("%s ", cur2->data);
-        }
-    }
-
-    printf(".\n==================================\n");
+    printf(".\n=============================================\n");
 
     StackDtor(&path1, stderr);
     StackDtor(&path2, stderr);
@@ -507,8 +552,10 @@ TreeErrors AskAndDoFileRead(Tree_t *tree, DumpInfo *Info, FileInfo *FileInfo, FI
 
         fclose(file_in);
         fclose(file_log);
+        Info->flag_new = true;
         DoTreeInGraphviz(tree->root, Info, tree->root);
         DoDump(Info);
+        Info->flag_new = false;
         return kSuccess;
     }
     case (kDoNot):{

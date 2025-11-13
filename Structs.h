@@ -28,6 +28,7 @@ typedef struct DumpInfo {
     char *question;
     char image_file[MAX_IMAGE_SIZE];
     size_t graph_counter;
+    bool flag_new;
 
     enum TreeErrors error;
 } DumpInfo;

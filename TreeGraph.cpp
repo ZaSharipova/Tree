@@ -60,7 +60,7 @@
 //     fprintf(file, "    edge [fontname=\"Arial\"];\n");      
 // }
 
-void PrintDotNode(FILE *file, const TreeNode_t *node, const TreeNode_t *node_colored) {
+void PrintDotNode(FILE *file, const TreeNode_t *node, const TreeNode_t *node_colored, bool flag) {
     assert(file);
     assert(node);
     assert(node_colored);
@@ -70,7 +70,7 @@ void PrintDotNode(FILE *file, const TreeNode_t *node, const TreeNode_t *node_col
         fprintf(file, "?");
     }
     fprintf(file, " | {Left:  %p | Right: %p}}\"; shape=Mrecord; color=black\n", node->left, node->right);
-    if (node == node_colored || node->parent == node_colored) {
+    if ((node == node_colored || node->parent == node_colored) && !flag) {
         fprintf(file, "fillcolor=darkgoldenrod2");
     }
     fprintf(file, "];\n");
@@ -78,12 +78,12 @@ void PrintDotNode(FILE *file, const TreeNode_t *node, const TreeNode_t *node_col
 
     if (node->left) {
         fprintf(file, "    \"%p\" -> \"%p\" \n [label=\"да\", fontsize=15, fontcolor=darkgreen, labeldistance=2.0, labelangle=45, color=darkolivegreen2];", (void *)node, (void *)node->left);
-        PrintDotNode(file, node->left, node_colored);
+        PrintDotNode(file, node->left, node_colored, flag);
     }
 
     if (node->right) {
         fprintf(file, "    \"%p\" -> \"%p\" [label=\"нет\", fontsize=15, fontcolor=darkred, labeldistance=2.0, labelangle=45, color=coral1];\n", (void *)node, (void *)node->right);
-        PrintDotNode(file, node->right, node_colored);
+        PrintDotNode(file, node->right, node_colored, flag);
     }
 }
 
@@ -125,7 +125,7 @@ void DoTreeInGraphviz(const TreeNode_t *node, DumpInfo *Info, const TreeNode_t *
         fprintf(file, "    // Empty tree\n");
     }
 
-    PrintDotNode(file, node, node_colored);
+    PrintDotNode(file, node, node_colored, Info->flag_new);
 
     fprintf(file, "}\n");
     fclose(file);
