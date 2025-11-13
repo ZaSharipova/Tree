@@ -11,7 +11,7 @@
 
 #define INSERT_TO_TREE(val) \
     value = val; \
-    InsertTree(&tree, &value);
+    InsertTree(&tree, value);
 
 #define CHECK_ERROR_RETURN(cond) \
     err = cond;                  \

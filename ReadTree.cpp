@@ -54,7 +54,7 @@ void DoBufRead(FILE *file, const char *filename, FileInfo *Info) {
     assert(filename);
     assert(Info);
 
-    Info->filesize = (size_t)SizeOfFile(filename);
+    Info->filesize = (size_t)SizeOfFile(filename) * 4;
 
     Info->buf_ptr = ReadToBuf(filename, file, Info->filesize);
     assert(Info->buf_ptr != NULL);
@@ -90,7 +90,7 @@ TreeElem_t ReadTitle(FILE *logfile, TreeElem_t buffer, size_t *pos) {
     // printf("\n%s ", start_ptr);
     // *pos += ((size_t)cnt + 1);
 
-    int result = sscanf(buffer + *pos, "\"%*[^\"]\"%n", &cnt);
+    int result = sscanf(buffer + *pos, " \"%*[^\"]\"%n", &cnt);
     if (result < 0) {
         fprintf(stderr, "Syntax error: Failed to read quoted string at position %zu\n", *pos);
         return NULL;

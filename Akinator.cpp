@@ -220,7 +220,7 @@ void PrintAkinatorToFile(FILE *file, TreeNode_t *node) {
     assert(file);
     assert(node);
 
-    fprintf(file, "(\"%s\"", node->data);
+    fprintf(file, "(\"%s\" ", node->data);
 
     if (node->left) {
         PrintAkinatorToFile(file, node->left);
@@ -497,7 +497,7 @@ TreeErrors AskAndDoFileRead(Tree_t *tree, DumpInfo *Info, FileInfo *FileInfo, FI
     TypeOfAnswer type_of_answer = AskAndReturnYesNo(YES_ANSWER, NO_ANSWER);
     switch (type_of_answer) {
     case (kDo): {
-        DoBufRead(file_in, "akinator_in.txt", FileInfo);
+        DoBufRead(file_in, "akinator_out.txt", FileInfo);
 
         size_t pos = 0;
         DO_OPEN_FILE_RETURN(file_log, "logfile_for_read.txt", "w");
@@ -511,8 +511,13 @@ TreeErrors AskAndDoFileRead(Tree_t *tree, DumpInfo *Info, FileInfo *FileInfo, FI
         DoDump(Info);
         return kSuccess;
     }
-    case (kDoNot):
+    case (kDoNot):{
+        TreeElem_t value = "No One knows";
+
+        InsertTree(tree, &value);
+       //INSERT_TO_TREE(&value);
         return kSuccess;
+    }
     case (kWrong):
         fprintf(stderr, "Error, no such answer.");
         return kFailure;

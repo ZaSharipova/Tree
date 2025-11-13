@@ -26,7 +26,7 @@ int main(void) {
     }
     Info.tree = &tree;
 
-    DO_OPEN_FILE_RETURN(file_in, "akinator_in.txt", "r");
+    DO_OPEN_FILE_RETURN(file_in, "akinator_out.txt", "r");
     
     FileInfo FileInfo = {};
     // DoBufRead(file_in, "akinator_in.txt", &FileInfo);
@@ -44,6 +44,7 @@ int main(void) {
     // CHECK_ERROR_RETURN(Akinator(&tree, tree.root, &Info));
 
     int cnt = 0;
+    //printf("%s", FileInfo.buf_ptr);
     CHECK_ERROR_RETURN(TreeVerify(tree.root, (int)tree.size, &cnt));
     
     // DoTreeInGraphviz(tree.root, &Info, tree.root);

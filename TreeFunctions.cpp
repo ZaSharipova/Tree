@@ -49,7 +49,7 @@ TreeErrors NodeDtor(TreeNode_t *node) {
 
 TreeErrors TreeDtor(Tree_t *tree, TreeElem_t buffer, size_t pos) {
     assert(tree);
-    assert(buffer);
+   // assert(buffer);
 
     TreeErrors err = kSuccess;
     CHECK_ERROR_RETURN(DeleteNode(tree->root, buffer, pos));
@@ -266,7 +266,7 @@ TreeErrors NodeVerify(const TreeNode_t *node) {
 
 
 TreeErrors DeleteNode(TreeNode_t *node, TreeElem_t buffer, size_t pos) {
-    assert(buffer);
+    //assert(buffer);
     if (!node)
         return kSuccess;
 
