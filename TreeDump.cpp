@@ -9,6 +9,25 @@
 #include "TreeGraph.h"
 
 #define MAX_STRING_SIZE 60
+static const char *const TREE_ERROR_MESSAGES[] = {
+    [kSuccess]                 = "No error",
+    [kNoMemory]                = "Memory allocation failed",
+    [kNodeNullPointer]         = "Null pointer passed as node",
+    [kBadTree]                 = "Tree is corrupted or invalid",
+    [kNoSuchNode]              = "Node not found in the tree",
+    [kNodeInvalidData]         = "Node contains invalid data",
+    [kNodeSelfReference]       = "Node points to itself",
+    [kNodeParentChildMismatch] = "Parent-child relationship mismatch",
+    [kNodeChildParentMismatch] = "Child-parent relationship mismatch",
+    [kNotRightTree]            = "Structure is not a valid tree",
+    [kFailure]                 = "Unknown general error",
+    [kNoPossibleNode]          = "No applicable node found",
+    [kErrorOpeningFile]        = "Error opening file",
+    [kErrorClosingFile]        = "Error closing file",
+    [kErrorStat]               = "Filesystem operation (stat) error",
+    [kSyntaxError]             = "Syntax error in the file/line"
+};
+#define NUMBER_OF_ERRORS (sizeof(TREE_ERROR_MESSAGES) / sizeof(TREE_ERROR_MESSAGES[0]))
 
 static void PrintCurrentTime(FILE *file, const char *label);
 
@@ -20,7 +39,20 @@ void DoDump(DumpInfo *Info) {
     }
     FILE *file = Info->file;
 
-    if (Info->name && Info->question) {
+    unsigned int bit = 1;
+    if (Info->error) {
+        fprintf(Info->file, "<h2> <font color=\"red\"> DUMP Listing Error</h2> </font>  \n");
+        fprintf(Info->file, "<h2> <font color = \"red\"> %s</font> </h2> ", Info->message);
+        fprintf(Info->file, "<h3> errors: </h3>");
+        for (unsigned long long i = 0; i < NUMBER_OF_ERRORS; i++) {
+            if (Info->error & bit) {
+                fprintf(Info->file, "<h4> <font color=\"red\"> %s </font> </h4> \n", TREE_ERROR_MESSAGES[i]);
+            }
+            bit <<= 1;
+        }
+        fprintf(Info->file, "<br>");
+    }
+    else if (Info->name && Info->question) {
 
        fprintf(file, "<h2>DUMP new character with question: <font color = orange> %s?</font>, and name: <font color = orange> %s</font> </h2>\n", 
         Info->question, Info->name);

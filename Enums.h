@@ -8,24 +8,25 @@ typedef char* TreeElem_t;
 
 #define MAX_IMAGE_SIZE 100
 
-enum TreeErrors{
-    kSuccess,
-    kNoMemory,
-    kNodeNullPointer,
-    kBadTree,
-    kNoSuchNode,
-    kNodeInvalidData,
-    kNodeSelfReference,
-    kNodeParentChildMismatch,
-    kNodeChildParentMismatch,
-    kNotRightTree,
-    kFailure,
-    kNoPossibleNode,
-    kErrorOpeningFile,
-    kErrorClosingFile,
-    kErrorStat,
-    kSyntaxError,
+enum TreeErrors {
+    kNoMemory                  = 1 << 0,
+    kNodeNullPointer           = 1 << 1,
+    kBadTree                   = 1 << 2,
+    kNoSuchNode                = 1 << 3,
+    kNodeInvalidData           = 1 << 4,
+    kNodeSelfReference         = 1 << 5,
+    kNodeParentChildMismatch   = 1 << 6,
+    kNodeChildParentMismatch   = 1 << 7,
+    kNotRightTree              = 1 << 8,
+    kFailure                   = 1 << 9,
+    kNoPossibleNode            = 1 << 10,
+    kErrorOpeningFile          = 1 << 11,
+    kErrorClosingFile          = 1 << 12,
+    kErrorStat                 = 1 << 13,
+    kSyntaxError               = 1 << 14,
+    kSuccess                   = 0,
 };
+
 
 enum TypeOfAnswer {
     kDo,

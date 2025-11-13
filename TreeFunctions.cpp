@@ -5,7 +5,7 @@
 #include <string.h>
 
 #include "Enums.h"  
-#include "Structs.h"           
+#include "Structs.h"
 
 TreeErrors TreeRootCtor(Tree_t *tree) {
     assert(tree);
@@ -202,6 +202,7 @@ TreeErrors TreeVerify(const TreeNode_t *head, int size, int *cnt) {
     assert(cnt);
 
     TreeErrors err = kSuccess;
+    unsigned int error = 0;
     CHECK_ERROR_RETURN(NodeVerify(head));
 
     if (head->left) {
@@ -224,40 +225,44 @@ TreeErrors TreeVerify(const TreeNode_t *head, int size, int *cnt) {
 TreeErrors NodeVerify(const TreeNode_t *node) {
     assert(node);
 
+    unsigned int error = 0;
+
     if (node == NULL) {
-        return kNodeNullPointer;
+        error |= kNodeNullPointer;
+        return (TreeErrors) error;
     }
 
     if (node->data == NULL) {
-        return kNodeInvalidData;
+        error |= kNodeInvalidData;
     }
     
     if (node->parent == node || node->left == node || node->right == node) {
-        return kNodeSelfReference;
+        error |= kNodeSelfReference;
     }
     
     if (node->parent != NULL) {
         if (node->parent->left != node && node->parent->right != node) {
-            return kNodeParentChildMismatch;
+            error |= kNodeParentChildMismatch;
         }
     }
     
     if (node->left != NULL) {
         if (node->left->parent != node) {
-            return kNodeChildParentMismatch;
+            error |= kNodeChildParentMismatch;
         }
     }
     if (node->right != NULL) {
         if (node->right->parent != node) {
-            return kNodeChildParentMismatch;
+            error |= kNodeChildParentMismatch;
         }
     }
-
-    if ((node->right && !node->left) || (!node->left && node->right)) {
-        return kNotRightTree;
+    if ((node->right && !node->left) || (!node->right && node->left)) {
+        error |= kNotRightTree;
     }
-    return kSuccess;
+
+    return (TreeErrors) error;
 }
+
 
 
 TreeErrors DeleteNode(TreeNode_t *node, TreeElem_t buffer, size_t pos) {
