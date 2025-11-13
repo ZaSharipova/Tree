@@ -19,6 +19,8 @@ TreeErrors CompareNames(TreeNode_t *head, const char *value1, const char *value2
 
 
 TreeErrors DoBufRead(FILE *file, const char *filename, FileInfo *Info);
+TreeErrors AskAndDoFileRead(Tree_t *tree, DumpInfo *Info, FileInfo *FileInfo, FILE *file_in);
+TreeErrors DoDifferentAkinatorModes(Tree_t *tree, DumpInfo *Info, size_t pos);
 
 //TreeErrors ReadAkinatorTreeFromFilename(const char *filename, TreeNode_t **root);
 #endif //AKINATOR_H_

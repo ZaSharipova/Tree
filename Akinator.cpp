@@ -10,6 +10,8 @@
 #include "TreeFunctions.h"
 #include "TreeGraph.h"
 #include "TreeDump.h"
+#include "StackFunctions.h"
+#include "ReadTree.h"
 
 
 #define MAX_LINE_SIZE 30
@@ -27,7 +29,7 @@
         return kNoMemory;                                               \
     }
 
-const char *AndPhrases[] = {
+const char *AND_PHRASES[] = {
     "и",
     "а также",
     "более того",
@@ -35,7 +37,7 @@ const char *AndPhrases[] = {
     "к тому же",
     "плюс",
 };
-#define AndPhasesSize (sizeof(AndPhrases)/sizeof(AndPhrases[0]))
+#define AndPhrasesSize (sizeof(AND_PHRASES)/sizeof(AND_PHRASES[0]))
 
 static void ReadLine(char *answer) {
     assert(answer);
@@ -59,9 +61,9 @@ static TypeOfAnswer AskAndReturnYesNo(const char *type_of_answer_yes, const char
 
     TypeOfAnswer flag = kWrong;
     if (strncmp(answer, type_of_answer_yes, strlen(type_of_answer_yes)) == 0) {
-        flag = kYes;
+        flag = kDo;
     } else if (strncmp(answer, type_of_answer_no, strlen(type_of_answer_no)) == 0) {
-        flag = kNo;
+        flag = kDoNot;
     }
 
     free(answer);
@@ -69,7 +71,7 @@ static TypeOfAnswer AskAndReturnYesNo(const char *type_of_answer_yes, const char
     return flag;
 }
 
-static TypeOfAnswer AskYesNo(const char *question) { //askifguessed
+static TypeOfAnswer AskIfGuessed(const char *question) { //askifguessed
     assert(question);
 
     printf(YELLOW "\nЭто %s? (" YES_ANSWER"/" NO_ANSWER"):\n" RESET, question);
@@ -103,33 +105,37 @@ static TreeErrors AddNewCharacter(TreeNode_t *node, Tree_t *tree) {
     return kSuccess;
 }
 
-static TreeErrors DoCorrectGuess(Tree_t *tree, TreeNode_t *node, DumpInfo *Info) {
+static TreeErrors DoCorrectGuess(Tree_t *tree, TreeNode_t **node, DumpInfo *Info, TypeOfAnswer *play_again_flag) {
     assert(tree);
     assert(node);
     assert(Info);
+    assert(play_again_flag);
 
     printf(RED "\nОтлично, ответ угадан!\n" RESET);
-    if (PlayAgain() == kYes) {
-        return Akinator(tree, tree->root, Info);
+    *play_again_flag = PlayAgain();
+    if (*play_again_flag != kWrong) {
+        *node = tree->root;
     }
 
     return kSuccess;
 }
 
-static TreeErrors DoWrongGuess(Tree_t *tree, TreeNode_t *node, DumpInfo *Info) {
+static TreeErrors DoWrongGuess(Tree_t *tree, TreeNode_t **node, DumpInfo *Info, TypeOfAnswer *play_again_flag) {
     assert(tree);
     assert(node);
     assert(Info);
+    assert(play_again_flag);
 
-    AddNewCharacter(node, tree);
+    AddNewCharacter(*node, tree);
 
-    Info->question = node->data;
-    Info->name = node->left->data;
-    DoTreeInGraphviz((const TreeNode_t *)tree->root, Info, node);
+    Info->question = (*node)->data;
+    Info->name = (*node)->left->data;
+    DoTreeInGraphviz(tree->root, Info, *node);
     DoDump(Info);
             
-    if (PlayAgain() == kYes) {
-        return Akinator(tree, tree->root, Info);
+    *play_again_flag = PlayAgain();
+    if (*play_again_flag != kWrong) {
+        *node = tree->root;
     }
 
     return kSuccess;
@@ -144,36 +150,27 @@ TreeErrors Akinator(Tree_t *tree, TreeNode_t *node, DumpInfo *Info) {
     CHECK_ERROR_RETURN(NodeVerify(node));
 
     const char *question = NULL;
-    bool yes_flag = false; //
+    TypeOfAnswer play_again_flag = kDo;
+    TypeOfAnswer ask_if_guessed_flag = kWrong;
 
-    while (node) { //
+    while (node && play_again_flag == kDo) {
         question = node->data;
-        yes_flag = AskYesNo(question);
+        ask_if_guessed_flag = AskIfGuessed(question);
 
         if (!node->left && !node->right) {
-            if (yes_flag == kYes) {
-                return DoCorrectGuess(tree, node, Info);
-            } else if (yes_flag == kNo){
-                return DoWrongGuess(tree, node, Info);
+            if (ask_if_guessed_flag == kDo) {
+                CHECK_ERROR_RETURN(DoCorrectGuess(tree, &node, Info, &play_again_flag));
+            } else if (ask_if_guessed_flag == kDoNot) {
+                CHECK_ERROR_RETURN(DoWrongGuess(tree, &node, Info, &play_again_flag));
             } else {
-                return kFailure; //
+                return kFailure;
             }
 
         } else {
-            if (yes_flag == kYes) {
-                if (node->left) {
-                    node = node->left;
-                } else {
-                    fprintf(stderr, "Ошибка: нет левого узла для ответа 'да'.\n"); //
-                    return kNoPossibleNode;
-                }
-            } else if (yes_flag == kNo) {
-                if (node->right) {
-                    node = node->right;
-                } else {
-                    fprintf(stderr, "Ошибка: нет правого узла для ответа 'нет'.\n");
-                    return kNoPossibleNode;
-                }
+            if (ask_if_guessed_flag == kDo) {
+                node = node->left;
+            } else if (ask_if_guessed_flag == kDoNot) {
+                node = node->right;
             } else {
                 return kFailure;
             }
@@ -200,7 +197,7 @@ TreeErrors NodesInsertAtTheEnd(TreeNode_t *node, char *name, char *question, Tre
     node->right = new_node_right;
     new_node_left->parent = node;
     new_node_right->parent = node;
-    (tree->size) ++;
+    (tree->size)++;
 
     // size_t len = strlen(question) + 2;
     // DO_CALLOC_AND_CHECK_PROBLEM_RETURN(new_question, len);
@@ -272,27 +269,34 @@ TreeErrors PrintDefinition(TreeNode_t *current, TreeNode_t *prev, char *definiti
         PrintDefinition(current->parent, current, definition_str, buffer_len, pos_in_phrases);
     }
 
-    char *text = NULL;
-    char buf[MAX_PHRASE_SIZE] = {};
-    
-    if (prev == current->left) {
-        snprintf(buf, sizeof(buf), "%s %s", AndPhrases[*pos_in_phrases], current->data); //
-        *pos_in_phrases = (*pos_in_phrases + 1) % AndPhasesSize;
-        text = buf;
+    char buf[MAX_PHRASE_SIZE] = "";
+    const char *phrase = AND_PHRASES[*pos_in_phrases];
+    *pos_in_phrases = (*pos_in_phrases + 1) % AndPhrasesSize;
 
-    } else if (prev == current->right) {
-        snprintf(buf, sizeof(buf), "%s не %s", AndPhrases[*pos_in_phrases], current->data);
-        *pos_in_phrases = (*pos_in_phrases + 1) % AndPhasesSize;
-        text = buf;
+    if (prev == current->left) {
+        strcpy(buf, phrase);
+        strcat(buf, " ");
+        strcat(buf, current->data);
+    } 
+    else if (prev == current->right) {
+        strcpy(buf, phrase);
+        strcat(buf, " не ");
+        strcat(buf, current->data);
+    } 
+    else {
+        return kSuccess;
     }
 
-    if (text) {
-        if (definition_str[0] != '\0' && (current->left || current->right)) {
-            strncat(definition_str, ", ", buffer_len - strlen(definition_str) - 1);
-        }
-        strncat(definition_str, text, buffer_len - strlen(definition_str) - 1);
-        printf("%s", text);
-        if ((current->left || current->right) && current->left->left && current->left->left) printf(", ");
+    if (definition_str[0] != '\0' && (current->left || current->right)) {
+        strcat(definition_str, ", ");
+    }
+
+    strcat(definition_str, buf);
+
+    printf("%s", buf);
+
+    if (definition_str[0] != '\0' && (current->left || current->right)) {
+        printf(", ");
     }
 
     return kSuccess;
@@ -398,45 +402,165 @@ TreeErrors CompareNames(TreeNode_t *head, const char *value1, const char *value2
     assert(value1);
     assert(value2);
 
-    TreeErrors err = kSuccess;
     TreeNode_t *node1 = NULL;
-    CHECK_ERROR_RETURN(FindAkinatorNodeAddress(head, value1, &node1));
-
     TreeNode_t *node2 = NULL;
-    CHECK_ERROR_RETURN(FindAkinatorNodeAddress(head, value2, &node2));
 
-    TreeNode_t *same_parent = FindClosestSameNode(node1, node2);
-
-    TreeNode_t *node = same_parent;
-    printf("==================Names=Comparison==============\n");
-    printf("%s и %s похожи в: ", value1, value2);
-    if (node->parent) {
-        PrintSimpleDefinition(node->parent);
+    if (FindAkinatorNodeAddress(head, value1, &node1) != kSuccess ||
+        FindAkinatorNodeAddress(head, value2, &node2) != kSuccess) {
+        fprintf(stderr, "Один из узлов не найден в дереве.\n");
+        return kNoSuchNode;
     }
-    // if (node->parent || node == head) {
-    //     while (node->parent && node != same_parent) {
-    //         node = node->parent;
-    //         printf("%s, ", node->data);
-    //     }
-    // }
 
+    Stack_Info path1 = {};
+    Stack_Info path2 = {};
+    if (StackCtor(&path1, 4, stderr) != kSuccessS || StackCtor(&path2, 4, stderr) != kSuccessS) {
+        return kNoMemory;
+    }
 
+    for (TreeNode_t *cur = node1; cur; cur = cur->parent)
+        StackPush(&path1, cur, stderr);
+
+    for (TreeNode_t *cur = node2; cur; cur = cur->parent)
+        StackPush(&path2, cur, stderr);
+
+    TreeNode_t *cur1 = NULL;
+    TreeNode_t *cur2 = NULL;
+    TreeNode_t *next1 = NULL;
+    TreeNode_t *next2 = NULL;
+    TreeNode_t *last_common = NULL;
+
+    printf("==================Names Comparison==============\n");
+    printf("%s и %s похожи в: ", value1, value2);
+
+    while (path1.size > 0 && path2.size > 0) {
+        StackPop(&path1, &cur1, stderr);
+        StackPop(&path2, &cur2, stderr);
+
+        if (cur1 == cur2) {
+            StackPop(&path1, &next1, stderr);
+            StackPop(&path2, &next2, stderr);
+            if (next1 == next2) {
+                printf("%s, ", cur1->data);
+            } else {
+                StackPush(&path1, next1, stderr);
+                StackPush(&path2, next2, stderr);
+                break;
+            }
+        } else {
+            StackPush(&path1, cur1, stderr);
+            StackPush(&path2, cur2, stderr);
+            break;
+        }
+    }
+
+    last_common = cur1;
     printf("\nНо %s — ", value1);
-
-    if (node1->parent == same_parent->parent) {
-        printf("%s", node1 == same_parent->left ? same_parent->left->data : node1->data);
-    } else if (node1 == same_parent->right) {
-        printf("не %s", same_parent->data);
-    } else {
-        printf("%s", node1->data);
+    printf("%s ", last_common->data);
+    while (path1.size > 1) {
+        StackPop(&path1, &cur1, stderr);
+        if (cur1->parent && cur1->parent->right != cur1) {
+            printf("не %s ", cur1->data);
+        } else {
+            printf("%s ", cur1->data);
+        }
     }
 
     printf(", а %s — ", value2);
-    if (node2 == same_parent->right->parent) {
-        printf("не %s", same_parent->data);
-    } else
-        printf("%s", node2->data);
+    printf("не %s ", last_common->data);
+    while (path2.size > 1) {
+        StackPop(&path2, &cur2, stderr);
+        if (cur2->parent && cur2->parent->right != cur2) {
+            printf("не %s ", cur2->data);
+        } else {
+            printf("%s ", cur2->data);
+        }
+    }
 
     printf(".\n==================================\n");
+
+    StackDtor(&path1, stderr);
+    StackDtor(&path2, stderr);
+
     return kSuccess;
+}
+
+
+TreeErrors AskAndDoFileRead(Tree_t *tree, DumpInfo *Info, FileInfo *FileInfo, FILE *file_in) {
+    assert(tree);
+    assert(FileInfo);
+    assert(Info);
+    assert(file_in);
+
+    printf(YELLOW "Вы хотите воспользоваться старой базой данных? (да/нет): \n" RESET);
+
+    TreeErrors err = kSuccess;
+    TypeOfAnswer type_of_answer = AskAndReturnYesNo(YES_ANSWER, NO_ANSWER);
+    switch (type_of_answer) {
+    case (kDo): {
+        DoBufRead(file_in, "akinator_in.txt", FileInfo);
+
+        size_t pos = 0;
+        DO_OPEN_FILE_RETURN(file_log, "logfile_for_read.txt", "w");
+        TreeNode_t *new_node = NULL;
+        CHECK_ERROR_RETURN(ReadNodeFromFile(tree, file_in, file_log, &pos, tree->root, FileInfo->buf_ptr, &new_node));
+        tree->root = new_node;
+
+        fclose(file_in);
+        fclose(file_log);
+        DoTreeInGraphviz(tree->root, Info, tree->root);
+        DoDump(Info);
+        return kSuccess;
+    }
+    case (kDoNot):
+        return kSuccess;
+    case (kWrong):
+        fprintf(stderr, "Error, no such answer.");
+        return kFailure;
+    default:
+        fprintf(stderr, "No such mode.");
+        return kFailure;
+    }
+}
+
+TreeErrors DoDifferentAkinatorModes(Tree_t *tree, DumpInfo *Info, size_t pos) {
+    assert(tree);
+    assert(Info);
+
+    TreeErrors err = kSuccess;
+    printf(YELLOW "В какой режим акинатора вы хотите сыграть: \n1. Поиск объекта, 2. Математическое определение объекта, 3. Сравнение двух объектов\n" RESET);
+    
+    int number = 0;
+    scanf("%d", &number);
+    getchar();
+
+    switch (number) {
+    case (1):
+        CHECK_ERROR_RETURN(Akinator(tree, tree->root, Info));
+        return kSuccess;
+    case (2): {
+        printf("Введите название объекта: \n");
+        DO_CALLOC_AND_CHECK_PROBLEM_RETURN(name, MAX_LINE_SIZE);
+        ReadLine(name);
+        CHECK_ERROR_RETURN(DoPrintDefinition(tree->root, name, tree->size, pos));
+        free(name);
+        return kSuccess;
+    }
+    case (3): {
+        printf("Введите названия двух интересующих объектов:\n");
+        DO_CALLOC_AND_CHECK_PROBLEM_RETURN(name1, MAX_LINE_SIZE);
+        DO_CALLOC_AND_CHECK_PROBLEM_RETURN(name2, MAX_LINE_SIZE);
+        int result = scanf("%s %s", name1, name2);
+        getchar();
+        if (result < 2) {
+            return kFailure;
+        }
+        CHECK_ERROR_RETURN(CompareNames(tree->root, name1, name2));
+        free(name1);
+        free(name2);
+        return kSuccess;
+    } 
+    default:
+        fprintf(stderr, "No such mode.");
+        return kFailure;
+    }
 }

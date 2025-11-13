@@ -201,21 +201,23 @@ TreeErrors TreeVerify(const TreeNode_t *head, int size, int *cnt) {
     assert(head);
     assert(cnt);
 
-    NodeVerify(head);
+    TreeErrors err = kSuccess;
+    CHECK_ERROR_RETURN(NodeVerify(head));
 
     if (head->left) {
         (*cnt)++;
-        TreeVerify(head->left, size, cnt);
+        CHECK_ERROR_RETURN(TreeVerify(head->left, size, cnt));
     }
 
     if (head->right) {
         (*cnt)++;
-        TreeVerify(head->right, size, cnt);
+        CHECK_ERROR_RETURN(TreeVerify(head->right, size, cnt));
     }
 
-    if (*cnt < size) {
+    if (*cnt + 1 < size && head->parent == NULL) {
         return kBadTree;
     }
+
     return kSuccess;
 }
 
@@ -249,6 +251,10 @@ TreeErrors NodeVerify(const TreeNode_t *node) {
         if (node->right->parent != node) {
             return kNodeChildParentMismatch;
         }
+    }
+
+    if ((node->right && !node->left) || (!node->left && node->right)) {
+        return kNotRightTree;
     }
     return kSuccess;
 }

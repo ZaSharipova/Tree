@@ -29,12 +29,18 @@ typedef struct DumpInfo {
     char image_file[MAX_IMAGE_SIZE];
     size_t graph_counter;
 
-    TreeErrors error;
+    enum TreeErrors error;
 } DumpInfo;
 
 struct FileInfo {
     TreeElem_t buf_ptr;
     size_t filesize;
+};
+
+struct Stack_Info {
+    TreeNode_t **data;
+    ssize_t size;
+    ssize_t capacity;
 };
 
 #define RESET   "\033[0m"
