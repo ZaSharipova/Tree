@@ -39,6 +39,8 @@ const char *AND_PHRASES[] = {
 };
 #define AndPhrasesSize (sizeof(AND_PHRASES)/sizeof(AND_PHRASES[0]))
 
+bool CheckRight(TreeNode_t *last, Stack_Info *path);
+
 static void ReadLine(char *answer) {
     assert(answer);
 
@@ -259,49 +261,74 @@ TreeErrors FindAkinatorNodeAddress(TreeNode_t *node, const char *value, TreeNode
     return kFailure;
 }
 
-TreeErrors PrintDefinition(TreeNode_t *current, TreeNode_t *prev, char *definition_str, size_t buffer_len, size_t *pos_in_phrases) {
+TreeErrors PrintDefinition(TreeNode_t *current, char *definition_str, size_t buffer_len) {
     assert(current);
-    assert(prev);
     assert(definition_str);
-    assert(pos_in_phrases);
 
-    if (current->parent) {
-        PrintDefinition(current->parent, current, definition_str, buffer_len, pos_in_phrases);
+    Stack_Info path = {};
+    size_t pos_in_phrases = 0;
+    StackCtor(&path, 4, stderr);
+    StackPush(&path, current, stderr);
+    TreeNode_t *cur = current;
+
+    while (current->parent) {
+        StackPush(&path, current->parent, stderr);
+        current = current->parent;
     }
+    TreeNode_t *prev_node = NULL;
 
-    char buf[MAX_PHRASE_SIZE] = "";
-    const char *phrase = AND_PHRASES[*pos_in_phrases];
-    *pos_in_phrases = (*pos_in_phrases + 1) % AndPhrasesSize;
+    TreeNode_t *node = {};
+    StackPop(&path, &prev_node, stderr);
 
-    if (prev == current->left) {
-        strcpy(buf, phrase);
-        strcat(buf, " ");
-        strcat(buf, current->data);
-    } 
-    else if (prev == current->right) {
-        strcpy(buf, phrase);
-        strcat(buf, " не ");
-        strcat(buf, current->data);
-    } 
-    else {
-        return kSuccess;
-    }
+    while (path.size >= 1) {
+        StackPop(&path, &node, stderr);
 
-    if (definition_str[0] != '\0' && (current->left || current->right)) {
-        strcat(definition_str, ", ");
-    }
+        char buf[MAX_PHRASE_SIZE] = {};
+        const char *phrase = AND_PHRASES[pos_in_phrases];
+        pos_in_phrases = (pos_in_phrases + 1) % AndPhrasesSize;
 
-    strcat(definition_str, buf);
+        if (prev_node->left && prev_node->left == node) {
+            strcpy(buf, phrase);
+            strcat(buf, " ");
+            strcat(buf, prev_node->data);
+        } 
+        else if (prev_node->right && prev_node->right == node) {
+            strcpy(buf, phrase);
+            strcat(buf, " не ");
+            strcat(buf, prev_node->data);
+        } 
+        else {
+            return kSuccess;
+        }
 
-    printf("%s", buf);
+        if (definition_str[0] != '\0' && (prev_node->left || prev_node->right)) {
+            strcat(definition_str, ", ");
+        }
 
-    if (definition_str[0] != '\0' && (current->left || current->right)) {
-        printf(", ");
+        strcat(definition_str, buf);
+        printf("%s", buf);
+
+        if ((prev_node->left || prev_node->right) && (prev_node->left != cur && prev_node->right != cur)) {
+            printf(", ");
+        }
+
+        prev_node = node;
     }
 
     return kSuccess;
 }
 
+void DoSystemCallForSayCommand(char *command, size_t size_of_command, const char *value, char *definition_str) {
+    assert(command);
+    assert(size_of_command);
+    assert(value);
+    assert(definition_str);
+
+    snprintf(command, size_of_command, "say \"%s - это %s\"", value, definition_str);
+    fprintf(stderr, "Running command: %s\n", command);
+    int return_result = system(command);
+    fprintf(stderr, "Return code: %d\n", return_result);
+}
 
 TreeErrors DoPrintDefinition(TreeNode_t *node, const char *value, size_t tree_size, size_t buffer_len) {
     assert(node);
@@ -321,19 +348,15 @@ TreeErrors DoPrintDefinition(TreeNode_t *node, const char *value, size_t tree_si
     size_t size_of_command = (buffer_len + strlen(value) + strlen(" - это ") + tree_size * 15) * 4;
     DO_CALLOC_AND_CHECK_PROBLEM_RETURN(definition_str, size_of_command);
 
-    size_t pos = 0;
     if (address->parent) {
-        PrintDefinition(address->parent, address, definition_str, size_of_command, &pos);
+        PrintDefinition(address, definition_str, size_of_command);
     }
 
     printf("\n==================================\n");
 
     DO_CALLOC_AND_CHECK_PROBLEM_RETURN(command, size_of_command);
 
-    snprintf(command, size_of_command, "say \"%s - это %s\"", value, definition_str);
-    fprintf(stderr, "Running command: %s\n", command);
-    int return_result = system(command);
-    fprintf(stderr, "Return code: %d\n", return_result);
+    DoSystemCallForSayCommand(command, size_of_command, value, definition_str);
 
     free(definition_str);
     free(command);
@@ -424,15 +447,13 @@ TreeErrors PrintSameCharacteristics(TreeNode_t *node1, TreeNode_t *node2, Stack_
         if (*cur1 == *cur2) {
             StackPop(path1, &next1, stderr);
             StackPop(path2, &next2, stderr);
+            StackPush(path1, next1, stderr);
+            StackPush(path2, next2, stderr);
             if (next1 == next2) {
                 if (cnt++ < 1) {
                     printf("%s", (*cur1)->data);
                 } else printf(", %s", (*cur1)->data);
-                StackPush(path1, next1, stderr);
-                StackPush(path2, next2, stderr);
             } else {
-                StackPush(path1, next1, stderr);
-                StackPush(path2, next2, stderr);
                 return kSuccess;
             }
         } else {
@@ -452,6 +473,7 @@ bool CheckRight(TreeNode_t *last, Stack_Info *path) {
     TreeNode_t *node_following = NULL;
     StackPop(path, &node_following, stderr);
     StackPush(path, node_following, stderr);
+
     if (last->right == node_following) {
         return true;
     }
@@ -528,7 +550,6 @@ TreeErrors CompareNames(TreeNode_t *head, const char *value1, const char *value2
 
     return kSuccess;
 }
-
 
 TreeErrors AskAndDoFileRead(Tree_t *tree, DumpInfo *Info, FileInfo *FileInfo, FILE *file_in) {
     assert(tree);
