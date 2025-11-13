@@ -60,25 +60,30 @@
 //     fprintf(file, "    edge [fontname=\"Arial\"];\n");      
 // }
 
-void PrintDotNode(FILE *file, const TreeNode_t *node) {
+void PrintDotNode(FILE *file, const TreeNode_t *node, const TreeNode_t *node_colored) {
     assert(file);
     assert(node);
+    assert(node_colored);
 
     fprintf(file, "    \"%p\" [ label=\"{Parent: %p | Addr: %p | Data: " TREE_SPEC"", (void *)node, (void *)node->parent, (void *)node, node->data);
     if (!(!node->left && !node->right)) {
         fprintf(file, "?");
     }
-    fprintf(file, " | {Left:  %p | Right: %p}}\"; shape=Mrecord; color=black];\n", node->left, node->right);
+    fprintf(file, " | {Left:  %p | Right: %p}}\"; shape=Mrecord; color=black\n", node->left, node->right);
+    if (node == node_colored || node->parent == node_colored) {
+        fprintf(file, "fillcolor=darkgoldenrod2");
+    }
+    fprintf(file, "];\n");
 
 
     if (node->left) {
         fprintf(file, "    \"%p\" -> \"%p\" \n [label=\"да\", fontsize=15, fontcolor=darkgreen, labeldistance=2.0, labelangle=45, color=darkolivegreen2];", (void *)node, (void *)node->left);
-        PrintDotNode(file, node->left);
+        PrintDotNode(file, node->left, node_colored);
     }
 
     if (node->right) {
         fprintf(file, "    \"%p\" -> \"%p\" [label=\"нет\", fontsize=15, fontcolor=darkred, labeldistance=2.0, labelangle=45, color=coral1];\n", (void *)node, (void *)node->right);
-        PrintDotNode(file, node->right);
+        PrintDotNode(file, node->right, node_colored);
     }
 }
 
@@ -94,9 +99,10 @@ static void DoSnprintf(DumpInfo *Info) {
     system(cmd);
 }
 
-void DoTreeInGraphviz(const TreeNode_t *node, DumpInfo *Info) {
+void DoTreeInGraphviz(const TreeNode_t *node, DumpInfo *Info, const TreeNode_t *node_colored) {
     assert(node);
     assert(Info);
+    assert(node_colored);
 
     FILE *file = fopen(Info->filename_to_write_graphviz, "w");
     if (!file) {
@@ -119,7 +125,7 @@ void DoTreeInGraphviz(const TreeNode_t *node, DumpInfo *Info) {
         fprintf(file, "    // Empty tree\n");
     }
 
-    PrintDotNode(file, node);
+    PrintDotNode(file, node, node_colored);
 
     fprintf(file, "}\n");
     fclose(file);

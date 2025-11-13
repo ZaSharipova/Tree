@@ -29,7 +29,7 @@
 TreeErrors TreeRootCtor(Tree_t *tree);
 TreeErrors NodeCtor(TreeNode_t **node, TreeElem_t *value);
 
-TreeErrors TreeDtor(Tree_t *tree);
+TreeErrors TreeDtor(Tree_t *tree, TreeElem_t buffer, size_t pos);
 TreeErrors NodeDtor(TreeNode_t *node);
 TreeErrors TreeVerify(const TreeNode_t *head, int size, int *cnt);
 TreeErrors NodeVerify(const TreeNode_t *node);
@@ -44,7 +44,7 @@ void PrintNodeInOrder(const TreeNode_t *node);
 void PrintSortedNode(const TreeNode_t *node);
 void SortNodeToArray(const TreeNode_t *node, TreeElem_t *arr_after, int *i);
 
-TreeErrors DeleteNode(TreeNode_t *node);
+TreeErrors DeleteNode(TreeNode_t *node, TreeElem_t buffer, size_t pos);
 
 bool CompareNodes(TreeElem_t parent_value, TreeElem_t children_value);
 

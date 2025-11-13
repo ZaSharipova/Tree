@@ -13,6 +13,7 @@
 
 
 #define MAX_LINE_SIZE 30
+#define MAX_PHRASE_SIZE 130
 #define MAX_LINE_SPECIFIER "29"
 #define YES_ANSWER "да"
 #define NO_ANSWER "нет"
@@ -34,7 +35,7 @@ const char *AndPhrases[] = {
     "к тому же",
     "плюс",
 };
-#define AndPhasesSize sizeof(AndPhrases)/sizeof(AndPhrases[0])
+#define AndPhasesSize (sizeof(AndPhrases)/sizeof(AndPhrases[0]))
 
 static void ReadLine(char *answer) {
     assert(answer);
@@ -68,7 +69,7 @@ static TypeOfAnswer AskAndReturnYesNo(const char *type_of_answer_yes, const char
     return flag;
 }
 
-static TypeOfAnswer AskYesNo(const char *question) {
+static TypeOfAnswer AskYesNo(const char *question) { //askifguessed
     assert(question);
 
     printf(YELLOW "\nЭто %s? (" YES_ANSWER"/" NO_ANSWER"):\n" RESET, question);
@@ -124,7 +125,7 @@ static TreeErrors DoWrongGuess(Tree_t *tree, TreeNode_t *node, DumpInfo *Info) {
 
     Info->question = node->data;
     Info->name = node->left->data;
-    DoTreeInGraphviz((const TreeNode_t *)tree->root, Info);
+    DoTreeInGraphviz((const TreeNode_t *)tree->root, Info, node);
     DoDump(Info);
             
     if (PlayAgain() == kYes) {
@@ -143,9 +144,9 @@ TreeErrors Akinator(Tree_t *tree, TreeNode_t *node, DumpInfo *Info) {
     CHECK_ERROR_RETURN(NodeVerify(node));
 
     const char *question = NULL;
-    bool yes_flag = false;
+    bool yes_flag = false; //
 
-    while (node) {
+    while (node) { //
         question = node->data;
         yes_flag = AskYesNo(question);
 
@@ -155,7 +156,7 @@ TreeErrors Akinator(Tree_t *tree, TreeNode_t *node, DumpInfo *Info) {
             } else if (yes_flag == kNo){
                 return DoWrongGuess(tree, node, Info);
             } else {
-                return kFailure;
+                return kFailure; //
             }
 
         } else {
@@ -163,7 +164,7 @@ TreeErrors Akinator(Tree_t *tree, TreeNode_t *node, DumpInfo *Info) {
                 if (node->left) {
                     node = node->left;
                 } else {
-                    fprintf(stderr, "Ошибка: нет левого узла для ответа 'да'.\n");
+                    fprintf(stderr, "Ошибка: нет левого узла для ответа 'да'.\n"); //
                     return kNoPossibleNode;
                 }
             } else if (yes_flag == kNo) {
@@ -199,7 +200,7 @@ TreeErrors NodesInsertAtTheEnd(TreeNode_t *node, char *name, char *question, Tre
     node->right = new_node_right;
     new_node_left->parent = node;
     new_node_right->parent = node;
-    tree->size ++;
+    (tree->size) ++;
 
     // size_t len = strlen(question) + 2;
     // DO_CALLOC_AND_CHECK_PROBLEM_RETURN(new_question, len);
@@ -256,6 +257,8 @@ TreeErrors FindAkinatorNodeAddress(TreeNode_t *node, const char *value, TreeNode
     if (node->right) {
         if (FindAkinatorNodeAddress(node->right, value, address) == kSuccess) return kSuccess;
     }
+
+    // fprintf(stderr, "No such name in Tree.\n");
     return kFailure;
 }
 
@@ -265,23 +268,21 @@ TreeErrors PrintDefinition(TreeNode_t *current, TreeNode_t *prev, char *definiti
     assert(definition_str);
     assert(pos_in_phrases);
 
-    static int pos = 1;
-
     if (current->parent) {
         PrintDefinition(current->parent, current, definition_str, buffer_len, pos_in_phrases);
     }
 
     char *text = NULL;
-    char buf[MAX_LINE_SIZE] = {};
+    char buf[MAX_PHRASE_SIZE] = {};
     
     if (prev == current->left) {
-        pos = (pos + 1) % AndPhasesSize;
-        snprintf(buf, sizeof(buf), "%s %s", AndPhrases[pos], current->data);
+        snprintf(buf, sizeof(buf), "%s %s", AndPhrases[*pos_in_phrases], current->data); //
+        *pos_in_phrases = (*pos_in_phrases + 1) % AndPhasesSize;
         text = buf;
 
     } else if (prev == current->right) {
-        pos = (pos + 1) % AndPhasesSize;
-        snprintf(buf, sizeof(buf), "%s не %s", AndPhrases[pos], current->data);
+        snprintf(buf, sizeof(buf), "%s не %s", AndPhrases[*pos_in_phrases], current->data);
+        *pos_in_phrases = (*pos_in_phrases + 1) % AndPhasesSize;
         text = buf;
     }
 
@@ -313,16 +314,18 @@ TreeErrors DoPrintDefinition(TreeNode_t *node, const char *value, size_t tree_si
     printf("\n============DEFINITION============\n");
     printf("%s - address: %p\nDefinition: ", value, address);
 
-    DO_CALLOC_AND_CHECK_PROBLEM_RETURN(definition_str, buffer_len);
+    size_t size_of_command = (buffer_len + strlen(value) + strlen(" - это ") + tree_size * 15) * 4;
+    DO_CALLOC_AND_CHECK_PROBLEM_RETURN(definition_str, size_of_command);
 
     size_t pos = 0;
     if (address->parent) {
-        PrintDefinition(address->parent, address, definition_str, buffer_len, &pos);
+        PrintDefinition(address->parent, address, definition_str, size_of_command, &pos);
     }
 
     printf("\n==================================\n");
 
-    size_t size_of_command = buffer_len + strlen(value) + strlen(" - это ") + tree_size * 11;
+    // printf("%d", size_of_command);
+    // printf(" %d", sizeof("say - \" Зарина - это и человек, а также не мужчи\""));
     DO_CALLOC_AND_CHECK_PROBLEM_RETURN(command, size_of_command);
 
     snprintf(command, size_of_command, "say \"%s - это %s\"", value, definition_str);
@@ -437,88 +440,3 @@ TreeErrors CompareNames(TreeNode_t *head, const char *value1, const char *value2
     printf(".\n==================================\n");
     return kSuccess;
 }
-
-// TreeErrors CompareResults(TreeNode_t *node, const char *value1, const char *value2, int count) {
-//     assert(node);
-//     assert(value1);
-//     assert(value2);
-
-//     // static TreeNode_t *head = node;
-
-//     TreeNode_t *address1 = NULL;
-//     TreeNode_t *address2 = NULL;
-
-//     FindAkinatorNodeAddress(node, value1, &address1);
-//     if (!address1) {
-//         fprintf(stderr, "Address for '%s' not found.\n", value1);
-//         return kNoSuchNode;
-//     }
-
-//     FindAkinatorNodeAddress(node, value2, &address2);
-//     if (!address2) {
-//         fprintf(stderr, "Address for '%s' not found.\n", value2);
-//         return kNoSuchNode;
-//     }
-
-//     TreeNode_t **path1 = (TreeNode_t **) calloc (count, sizeof(TreeNode_t *));
-//     if (!path1) return kNoMemory;
-
-//     TreeNode_t **path2 = (TreeNode_t **) calloc (count, sizeof(TreeNode_t *));
-//     if (!path2) {
-//         free(path1);
-//         return kNoMemory;
-//     }
-//     int len1 = 0;
-//     int len2 = 0;
-
-//     for (TreeNode_t *cur = address1; cur != NULL; cur = cur->parent) {
-//         if (len1 >= count) break;
-//         path1[len1++] = cur;
-//     }
-//     for (TreeNode_t *cur = address2; cur != NULL; cur = cur->parent) {
-//         if (len2 >= count) break;
-//         path2[len2++] = cur;
-//     }
-
-//     for (int i = 0; i < len1 / 2; i++) {
-//         TreeNode_t *tmp = path1[i];
-//         path1[i] = path1[len1 - 1 - i];
-//         path1[len1 - 1 - i] = tmp;
-//     }
-//     for (int i = 0; i < len2 / 2; i++) {
-//         TreeNode_t *tmp = path2[i];
-//         path2[i] = path2[len2 - 1 - i];
-//         path2[len2 - 1 - i] = tmp;
-//     }
-
-//     int common_len = 0;
-//     int min_len = (len1 < len2) ? len1 : len2;
-//     for (int i = 0; i < min_len; i++) {
-//         if (strcmp(path1[i]->data, path2[i]->data) == 0) {
-//             common_len++;
-//         } else {
-//             break;
-//         }
-//     }
-
-//     printf("Общие предки:\n");
-//     for (int i = 0; i < common_len; i++) {
-//         printf("  %s\n", path1[i]->data);
-//     }
-//     printf("\n");
-
-//     printf("Уникальные предки для %s:\n", value1);
-//     for (int i = common_len; i < len1; i++) {
-//         printf("  %s\n", path1[i]->data);
-//     }
-//     printf("\n");
-
-//     printf("Уникальные предки для %s:\n", value2);
-//     for (int i = common_len; i < len2; i++) {
-//         printf("  %s\n", path2[i]->data);
-//     }
-
-//     free(path1);
-//     free(path2);
-//     return kSuccess;
-// }

@@ -47,11 +47,12 @@ TreeErrors NodeDtor(TreeNode_t *node) {
     return kSuccess;
 }
 
-TreeErrors TreeDtor(Tree_t *tree) {
+TreeErrors TreeDtor(Tree_t *tree, TreeElem_t buffer, size_t pos) {
     assert(tree);
+    assert(buffer);
 
     TreeErrors err = kSuccess;
-    CHECK_ERROR_RETURN(DeleteNode(tree->root));
+    CHECK_ERROR_RETURN(DeleteNode(tree->root, buffer, pos));
 
     tree->root =  NULL;
     tree->size = NULL;
@@ -253,13 +254,24 @@ TreeErrors NodeVerify(const TreeNode_t *node) {
 }
 
 
-TreeErrors DeleteNode(TreeNode_t *node) {
+TreeErrors DeleteNode(TreeNode_t *node, TreeElem_t buffer, size_t pos) {
+    assert(buffer);
     if (!node)
         return kSuccess;
 
-    DeleteNode(node->left);
-    DeleteNode(node->right);
+    if (node->left) {
+        if (node->left->data >= buffer && node->left->data < buffer + pos) {
+            DeleteNode(node->left, buffer, pos);
+        }
+        node->left = NULL;
+    }
 
+    if (node->right) {
+        if (node->right->data >= buffer && node->right->data < buffer + pos) {
+            DeleteNode(node->right, buffer, pos);
+        }
+        node->right = NULL;
+    }
     free(node);
 
     return kSuccess;

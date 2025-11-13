@@ -35,29 +35,28 @@ int main(void) {
     int error = 0;
     DO_OPEN_FILE_RETURN(file_log, "logfile_for_read.txt", "w");
     TreeNode_t *new_node = NULL;
-    CHECK_ERROR_RETURN(ReadNodeFromFile(file_in, file_log, &pos, tree.root, FileInfo.buf_ptr, &new_node));
+    CHECK_ERROR_RETURN(ReadNodeFromFile(&tree, file_in, file_log, &pos, tree.root, FileInfo.buf_ptr, &new_node));
     tree.root = new_node;
 
     fclose(file_in);
     fclose(file_log);
 
-    DoTreeInGraphviz((const TreeNode_t *)tree.root, &Info);
-    DoDump(&Info);
     CHECK_ERROR_RETURN(Akinator(&tree, tree.root, &Info));
 
-    int cnt = 0;
-    CHECK_ERROR_RETURN(TreeVerify(tree.root, (int)tree.size, &cnt));
+    //int cnt = 0;
+    //CHECK_ERROR_RETURN(TreeVerify(tree.root, (int)tree.size, &cnt));
 
-    DoTreeInGraphviz(tree.root, &Info);
+    // DoTreeInGraphviz(tree.root, &Info, tree.root);
 
     CHECK_ERROR_RETURN(DoPrintDefinition(tree.root, "Зарина", tree.size, pos));
-    CHECK_ERROR_RETURN(CompareNames(tree.root, "Зарина", "Иван"));
+    CHECK_ERROR_RETURN(CompareNames(tree.root, "Зарина", "Исами"));
 
     DO_OPEN_FILE_RETURN(file_out, "akinator_out.txt", "w");
     PrintAkinatorToFile(file_out, tree.root);
     fclose(file_out);
 
-    CHECK_ERROR_RETURN(TreeDtor(&tree));
+    CHECK_ERROR_RETURN(TreeDtor(&tree, FileInfo.buf_ptr, pos));
+    free(FileInfo.buf_ptr);
     fclose(Info.file);
     return 0;
 }

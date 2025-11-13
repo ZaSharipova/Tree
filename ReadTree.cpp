@@ -82,13 +82,21 @@ TreeElem_t ReadTitle(FILE *logfile, TreeElem_t buffer, size_t *pos) {
     }
     
     int cnt = 0;
+    // printf("%s ", buffer + *pos + 1);
+    // TreeElem_t result = strchr(buffer + *pos + 1, '\"');
+    // cnt = result - (buffer + *pos);
+    // buffer[*pos + (size_t)cnt] = '\0';
+    // TreeElem_t start_ptr = buffer + *pos + 1;
+    // printf("\n%s ", start_ptr);
+    // *pos += ((size_t)cnt + 1);
+
     int result = sscanf(buffer + *pos, "\"%*[^\"]\"%n", &cnt);
     if (result < 0) {
         fprintf(stderr, "Syntax error: Failed to read quoted string at position %zu\n", *pos);
         return NULL;
     }
     fprintf(logfile, "%d %s", cnt, buffer + *pos);
-    
+
     buffer[*pos + (size_t)cnt - 1] = '\0';
     TreeElem_t start_ptr = buffer + *pos + 1;
     *pos += (size_t)cnt;
@@ -96,7 +104,8 @@ TreeElem_t ReadTitle(FILE *logfile, TreeElem_t buffer, size_t *pos) {
     return start_ptr;
 }
 
-TreeErrors ReadNodeFromFile(FILE *file, FILE *logfile, size_t *pos, TreeNode_t *node, TreeElem_t buffer, TreeNode_t **node_to_add) {
+TreeErrors ReadNodeFromFile(Tree_t *tree, FILE *file, FILE *logfile, size_t *pos, TreeNode_t *node, TreeElem_t buffer, TreeNode_t **node_to_add) {
+    assert(tree);
     assert(file);
     assert(logfile);
     //assert(node);
@@ -107,6 +116,7 @@ TreeErrors ReadNodeFromFile(FILE *file, FILE *logfile, size_t *pos, TreeNode_t *
     SkipSpaces(buffer, pos);
 
     if (buffer[*pos] == '(') {
+        tree->size ++;
         TreeNode_t *new_node = NULL;
         NodeCtor(&new_node, NULL);
         (*pos)++;
@@ -115,14 +125,15 @@ TreeErrors ReadNodeFromFile(FILE *file, FILE *logfile, size_t *pos, TreeNode_t *
 
         SkipSpaces(buffer, pos);
         TreeNode_t *left_child = NULL;
-        CHECK_ERROR_RETURN(ReadNodeFromFile(file, logfile, pos, new_node, buffer, &left_child));
+        CHECK_ERROR_RETURN(ReadNodeFromFile(tree, file, logfile, pos, new_node, buffer, &left_child));
         new_node->left = left_child;
 
         SkipSpaces(buffer, pos);
         TreeNode_t *right_child = NULL;
-        CHECK_ERROR_RETURN(ReadNodeFromFile(file, logfile, pos, new_node, buffer, &right_child));
+        CHECK_ERROR_RETURN(ReadNodeFromFile(tree, file, logfile, pos, new_node, buffer, &right_child));
         new_node->right = right_child;
 
+        SkipSpaces(buffer, pos);
         if (buffer[*pos] == ')') {
             buffer[*pos] = '\0';
             (*pos)++;
