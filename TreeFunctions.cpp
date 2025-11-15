@@ -202,7 +202,6 @@ TreeErrors TreeVerify(const TreeNode_t *head, int size, int *cnt) {
     assert(cnt);
 
     TreeErrors err = kSuccess;
-    unsigned int error = 0;
     CHECK_ERROR_RETURN(NodeVerify(head));
 
     if (head->left) {

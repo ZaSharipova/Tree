@@ -7,12 +7,12 @@
 #include "Structs.h"
 
 TreeErrors NodesInsertAtTheEnd(TreeNode_t *node, char *name, char *question, Tree_t *tree);
-TreeErrors Akinator(Tree_t *tree, TreeNode_t *node, DumpInfo *Info);
+TreeErrors Akinator(Tree_t *tree, TreeNode_t *node, DumpInfo *Info, TypeOfAnswer *play_again_flag);
 
 void PrintAkinatorToFile(FILE *file, TreeNode_t *node);
 
 TreeErrors DoPrintDefinition(TreeNode_t *node, const char *value, size_t tree_size, size_t count);
-TreeErrors PrintDefinition(TreeNode_t *current, TreeNode_t *prev, char *definition_str, size_t buffer_len, int *pos_in_phrases);
+TreeErrors PrintDefinition(TreeNode_t *current, TreeNode_t *prev, char *definition_str);
 TreeErrors SayDefinition(char **array_of_definitions, size_t count);
 
 TreeErrors CompareNames(TreeNode_t *head, const char *value1, const char *value2);

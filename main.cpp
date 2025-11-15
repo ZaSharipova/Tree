@@ -31,16 +31,12 @@ int main(void) {
 
     size_t pos = 0;
     CHECK_ERROR_RETURN(AskAndDoFileRead(&tree, &Info, &FileInfo, file_in));
-    // CHECK_ERROR_RETURN(Akinator(&tree, tree.root, &Info));
 
     int cnt = 0;
-    //printf("%s", FileInfo.buf_ptr);
     CHECK_ERROR_RETURN(TreeVerify(tree.root, (int)tree.size, &cnt));
     
     // DoTreeInGraphviz(tree.root, &Info, tree.root);
     CHECK_ERROR_RETURN(DoDifferentAkinatorModes(&tree, &Info, (size_t)pos));
-    // CHECK_ERROR_RETURN(DoPrintDefinition(tree.root, "Зарина", tree.size, pos));
-    // CHECK_ERROR_RETURN(CompareNames(tree.root, "Зарина", "Исами"));
 
     DO_OPEN_FILE_RETURN(file_out, "akinator_out.txt", "w");
     PrintAkinatorToFile(file_out, tree.root);

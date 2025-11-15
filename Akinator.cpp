@@ -13,6 +13,8 @@
 #include "StackFunctions.h"
 #include "ReadTree.h"
 
+#include "ShowGraphics/ShowImageAndGif.h"
+
 
 #define MAX_LINE_SIZE 30
 #define MAX_PHRASE_SIZE 130
@@ -28,6 +30,17 @@
         fprintf(stderr, "No memory in calloc.\n");                      \
         return kNoMemory;                                               \
     }
+
+
+#define PrintAndSystem(format, ...) do { \
+    printf(format, ##__VA_ARGS__); \
+    fflush(stdout); \
+    DO_CALLOC_AND_CHECK_PROBLEM_RETURN(cmd, MAX_PHRASE_SIZE * 4); \
+    /* Форматируем сразу команду say */ \
+    snprintf(cmd, MAX_PHRASE_SIZE * 4, "say \"" format "\"", ##__VA_ARGS__); \
+    system(cmd); \
+    free(cmd); \
+} while(0)
 
 const char *AND_PHRASES[] = {
     "и",
@@ -59,6 +72,7 @@ static TypeOfAnswer AskAndReturnYesNo(const char *type_of_answer_yes, const char
         return kWrong;
     }
     //DO_CALLOC_AND_CHECK_PROBLEM_RETURN(answer, MAX_LINE_SIZE);
+    
     ReadLine(answer);
 
     TypeOfAnswer flag = kWrong;
@@ -73,16 +87,24 @@ static TypeOfAnswer AskAndReturnYesNo(const char *type_of_answer_yes, const char
     return flag;
 }
 
-static TypeOfAnswer AskIfGuessed(const char *question) { //askifguessed
+static TypeOfAnswer AskIfGuessed(const char *question) {
     assert(question);
 
     printf(YELLOW "\nЭто %s? (" YES_ANSWER"/" NO_ANSWER"):\n" RESET, question);
+    ShowImage("/Users/zarinasharipova/Tree/Videos/IMG_3235.GIF");
+
+    char *buf = (char *) calloc (MAX_PHRASE_SIZE, sizeof(char));
+    snprintf(buf, MAX_PHRASE_SIZE, "say \"Это %s? (" YES_ANSWER"/" NO_ANSWER"):\"", question);
+    system(buf);
+    free(buf);
+
     return AskAndReturnYesNo(YES_ANSWER, NO_ANSWER);
 }
 
 static TypeOfAnswer PlayAgain(void) {
 
     printf(GREEN "\nЕсли хотите сыграть еще раз, введите CONT, иначе QUIT:\n" RESET);
+    system("say \"Если хотите сыграть еще раз, введите CONT, иначе QUIT:\"");
     return AskAndReturnYesNo(CONTINUE_ANSWER, QUIT_ANSWER);
 }
 
@@ -91,17 +113,21 @@ static TreeErrors AddNewCharacter(TreeNode_t *node, Tree_t *tree) {
     assert(tree);
 
     printf(BLUE "\nОтветьте тогда, кого Вы загадывали? Введите имя (инициалы, прозвище):\n" RESET);
+    system("say \"Ответьте тогда, кого Вы загадывали? Введите имя (инициалы, прозвище):\"");
 
     DO_CALLOC_AND_CHECK_PROBLEM_RETURN(name, MAX_LINE_SIZE);
     ReadLine(name);
 
     printf(BLUE "\nОтлично! Чем \"%s\" отличается от \"%s\"? Он ... :\n" RESET, name, node->data);
+    DO_CALLOC_AND_CHECK_PROBLEM_RETURN(buf, MAX_PHRASE_SIZE);
+    snprintf(buf, MAX_PHRASE_SIZE, "say \"Отлично! Чем \"%s\" отличается от \"%s\"? Он ... :\"", name, node->data);
 
     DO_CALLOC_AND_CHECK_PROBLEM_RETURN(new_question, MAX_LINE_SIZE); 
     ReadLine(new_question);
 
     NodesInsertAtTheEnd(node, name, new_question, tree);
     printf(MAGENTA "\nХорошо, Акинатор дополнен. Теперь в нем есть данный персонаж!\n" RESET);
+    system("Хорошо, Акинатор дополнен. Теперь в нем есть данный персонаж!");
     free(new_question);
 
     return kSuccess;
@@ -114,6 +140,7 @@ static TreeErrors DoCorrectGuess(Tree_t *tree, TreeNode_t **node, DumpInfo *Info
     assert(play_again_flag);
 
     printf(RED "\nОтлично, ответ угадан!\n" RESET);
+    system("say \"Отлично, ответ угадан!\"");
     *play_again_flag = PlayAgain();
     if (*play_again_flag != kWrong) {
         *node = tree->root;
@@ -212,12 +239,6 @@ TreeErrors NodesInsertAtTheEnd(TreeNode_t *node, char *name, char *question, Tre
     return kSuccess;
 }
 
-void DoAskGeneralQuestion(TreeNode_t *node) {
-    assert(node);
-
-    printf("Это %s?", node->data);
-}
-
 void PrintAkinatorToFile(FILE *file, TreeNode_t *node) {
     assert(file);
     assert(node);
@@ -237,7 +258,6 @@ void PrintAkinatorToFile(FILE *file, TreeNode_t *node) {
     }
 
     fprintf(file, ")");
-
 }
 
 TreeErrors FindAkinatorNodeAddress(TreeNode_t *node, const char *value, TreeNode_t **address) {
@@ -261,7 +281,21 @@ TreeErrors FindAkinatorNodeAddress(TreeNode_t *node, const char *value, TreeNode
     return kFailure;
 }
 
-TreeErrors PrintDefinition(TreeNode_t *current, char *definition_str, size_t buffer_len) {
+// TreeErrors PrintAndSystem(const char *stroke) {
+//     assert(stroke);
+
+//     TreeErrors err = kSuccess;
+//     printf("%s", stroke);
+    
+//     DO_CALLOC_AND_CHECK_PROBLEM_RETURN(buf, MAX_IMAGE_SIZE);
+//     snprintf(buf, MAX_IMAGE_SIZE, "say \"%s\"", stroke);
+//     system(buf);
+
+//     free(buf);
+//     return kSuccess;
+// }
+
+TreeErrors PrintDefinition(TreeNode_t *current, char *definition_str) {
     assert(current);
     assert(definition_str);
 
@@ -275,38 +309,24 @@ TreeErrors PrintDefinition(TreeNode_t *current, char *definition_str, size_t buf
         StackPush(&path, current->parent, stderr);
         current = current->parent;
     }
-    TreeNode_t *prev_node = NULL;
 
+    TreeNode_t *prev_node = NULL;
     TreeNode_t *node = {};
     StackPop(&path, &prev_node, stderr);
 
     while (path.size >= 1) {
         StackPop(&path, &node, stderr);
 
-        char buf[MAX_PHRASE_SIZE] = {};
         const char *phrase = AND_PHRASES[pos_in_phrases];
         pos_in_phrases = (pos_in_phrases + 1) % AndPhrasesSize;
 
         if (prev_node->left && prev_node->left == node) {
-            strcpy(buf, phrase);
-            strcat(buf, " ");
-            strcat(buf, prev_node->data);
+            PrintAndSystem("%s %s", phrase, prev_node->data);
         } 
         else if (prev_node->right && prev_node->right == node) {
-            strcpy(buf, phrase);
-            strcat(buf, " не ");
-            strcat(buf, prev_node->data);
+            PrintAndSystem("%s не %s", phrase, prev_node->data);
         } 
-        else {
-            return kSuccess;
-        }
-
-        if (definition_str[0] != '\0' && (prev_node->left || prev_node->right)) {
-            strcat(definition_str, ", ");
-        }
-
-        strcat(definition_str, buf);
-        printf("%s", buf);
+        else return kSuccess;
 
         if ((prev_node->left || prev_node->right) && (prev_node->left != cur && prev_node->right != cur)) {
             printf(", ");
@@ -314,7 +334,6 @@ TreeErrors PrintDefinition(TreeNode_t *current, char *definition_str, size_t buf
 
         prev_node = node;
     }
-
     return kSuccess;
 }
 
@@ -342,79 +361,25 @@ TreeErrors DoPrintDefinition(TreeNode_t *node, const char *value, size_t tree_si
         return kNoSuchNode;
     }
 
-    printf("\n============DEFINITION============\n");
-    printf("%s - address: %p\nDefinition: ", value, address);
+    printf("\n==========================================================================\n");
+    PrintAndSystem("\n                  Определение          \n");
+    PrintAndSystem("%s - адрес: %p\nОпределение: ", value, address);
 
     size_t size_of_command = (buffer_len + strlen(value) + strlen(" - это ") + tree_size * 15) * 4;
     DO_CALLOC_AND_CHECK_PROBLEM_RETURN(definition_str, size_of_command);
 
     if (address->parent) {
-        PrintDefinition(address, definition_str, size_of_command);
+        PrintDefinition(address, definition_str);
     }
 
-    printf("\n==================================\n");
+    printf("\n==========================================================================\n");
 
     DO_CALLOC_AND_CHECK_PROBLEM_RETURN(command, size_of_command);
 
-    DoSystemCallForSayCommand(command, size_of_command, value, definition_str);
+    //DoSystemCallForSayCommand(command, size_of_command, value, definition_str);
 
     free(definition_str);
     free(command);
-    return kSuccess;
-}
-
-static int FindDepth(TreeNode_t *node) {
-    assert(node);
-
-    int depth = 0;
-    while (node) {
-        depth++;
-        node = node->parent;
-    }
-    return depth;
-}
-
-TreeNode_t *FindClosestSameNode(TreeNode_t *node1, TreeNode_t *node2) {
-    assert(node1);
-    assert(node2);
-
-    int depth1 = FindDepth(node1);
-    int depth2 = FindDepth(node2);
-
-    while (depth1 > depth2) { 
-        node1 = node1->parent; 
-        depth1--; 
-    }
-    while (depth2 > depth1) { 
-        node2 = node2->parent; 
-        depth2--; 
-    }
-
-    while (node1 != node2) {
-        node1 = node1->parent;
-        node2 = node2->parent;
-    }
-
-    return node1;
-}
-
-TreeErrors PrintSimpleDefinition(TreeNode_t *node) {
-    assert(node);
-
-    if (node->parent) {
-       PrintSimpleDefinition(node->parent);
-    }
-
-    if (node->parent && node->parent->left == node) {
-        printf("%s, ", node->data);
-    } else if (node->parent && node->parent->right == node) {
-        printf("не %s, ", node->data);
-    }
-
-    if (!node->parent) {
-        printf("%s, ", node->data);
-    }
-
     return kSuccess;
 }
 
@@ -451,8 +416,8 @@ TreeErrors PrintSameCharacteristics(TreeNode_t *node1, TreeNode_t *node2, Stack_
             StackPush(path2, next2, stderr);
             if (next1 == next2) {
                 if (cnt++ < 1) {
-                    printf("%s", (*cur1)->data);
-                } else printf(", %s", (*cur1)->data);
+                    PrintAndSystem("%s", (*cur1)->data);
+                } else PrintAndSystem(", %s", (*cur1)->data);
             } else {
                 return kSuccess;
             }
@@ -486,10 +451,12 @@ TreeErrors PrintDifferentCharacteristics(TreeNode_t *cur, Stack_Info *path, cons
     assert(value);
 
     TreeNode_t *last_common = cur;
-    printf("\n%s — ", value);
+    PrintAndSystem("\n%s — ", value);
 
-    if (CheckRight(last_common, path)) printf("не ");
-    printf("%s", last_common->data);
+    if (CheckRight(last_common, path)) {
+        PrintAndSystem("не ");
+    }
+    PrintAndSystem("%s", last_common->data);
     if (path->size > 1) {
         printf(",");
     }
@@ -498,9 +465,9 @@ TreeErrors PrintDifferentCharacteristics(TreeNode_t *cur, Stack_Info *path, cons
         last_common = cur;
         StackPop(path, &cur, stderr);
         if (CheckRight(cur, path)) {
-            printf(" не");
+            PrintAndSystem(" не");
         } 
-        printf(" %s", cur->data);
+        PrintAndSystem(" %s", cur->data);
         if (path->size > 1) {
             printf(",");
         }
@@ -534,20 +501,45 @@ TreeErrors CompareNames(TreeNode_t *head, const char *value1, const char *value2
     TreeNode_t *cur1 = NULL;
     TreeNode_t *cur2 = NULL;
 
-    printf("==================Names Comparison==============\n");
-    printf("%s и %s похожи таким образом: ", value1, value2);
+    ShowImage("/Users/zarinasharipova/Tree/Videos/IMG_3239.GIF");
+    printf("\n===============================================================\n");
+    PrintAndSystem("                Сравнение имен\n");
+    PrintAndSystem("%s и %s похожи таким образом: \n", value1, value2);
 
     PrintSameCharacteristics(node1, node2, &path1, &path2, &cur1, &cur2);
 
-    printf(",\n\nPазличаются таким образом:\n");
+    PrintAndSystem(",\n\nPазличаются таким образом:\n");
     PrintDifferentCharacteristics(cur1, &path1, value1);
     PrintDifferentCharacteristics(cur2, &path2, value2);
-
-    printf(".\n=============================================\n");
+    printf(".\n===============================================================\n");
 
     StackDtor(&path1, stderr);
     StackDtor(&path2, stderr);
 
+    return kSuccess;
+}
+
+TreeErrors DoFileAkinatorRead(Tree_t *tree, DumpInfo *Info, FileInfo *FileInfo, FILE *file_in) {
+    assert(tree);
+    assert(FileInfo);
+    assert(Info);
+    assert(file_in);
+
+    TreeErrors err = kSuccess;
+    DoBufRead(file_in, "akinator_out.txt", FileInfo);
+
+    size_t pos = 0;
+    DO_OPEN_FILE_RETURN(file_log, "logfile_for_read.txt", "w");
+    TreeNode_t *new_node = NULL;
+    CHECK_ERROR_RETURN(ReadNodeFromFile(tree, file_in, file_log, &pos, tree->root, FileInfo->buf_ptr, &new_node));
+    tree->root = new_node;
+
+    fclose(file_in);
+    fclose(file_log);
+    Info->flag_new = true;
+    DoTreeInGraphviz(tree->root, Info, tree->root);
+    DoDump(Info);
+    Info->flag_new = false;
     return kSuccess;
 }
 
@@ -558,32 +550,18 @@ TreeErrors AskAndDoFileRead(Tree_t *tree, DumpInfo *Info, FileInfo *FileInfo, FI
     assert(file_in);
 
     printf(YELLOW "Вы хотите воспользоваться старой базой данных? (да/нет): \n" RESET);
+    system("say \"Вы хотите воспользоваться старой базой данных? (да/нет): \" ");
+    ShowImage("/Users/zarinasharipova/Tree/Videos/IMG_3235.GIF");
 
-    TreeErrors err = kSuccess;
     TypeOfAnswer type_of_answer = AskAndReturnYesNo(YES_ANSWER, NO_ANSWER);
+    
     switch (type_of_answer) {
-    case (kDo): {
-        DoBufRead(file_in, "akinator_out.txt", FileInfo);
-
-        size_t pos = 0;
-        DO_OPEN_FILE_RETURN(file_log, "logfile_for_read.txt", "w");
-        TreeNode_t *new_node = NULL;
-        CHECK_ERROR_RETURN(ReadNodeFromFile(tree, file_in, file_log, &pos, tree->root, FileInfo->buf_ptr, &new_node));
-        tree->root = new_node;
-
-        fclose(file_in);
-        fclose(file_log);
-        Info->flag_new = true;
-        DoTreeInGraphviz(tree->root, Info, tree->root);
-        DoDump(Info);
-        Info->flag_new = false;
+    case (kDo): 
+        DoFileAkinatorRead(tree, Info, FileInfo, file_in);
         return kSuccess;
-    }
     case (kDoNot):{
         TreeElem_t value = "No One knows";
-
         InsertTree(tree, &value);
-       //INSERT_TO_TREE(&value);
         return kSuccess;
     }
     case (kWrong):
@@ -595,45 +573,90 @@ TreeErrors AskAndDoFileRead(Tree_t *tree, DumpInfo *Info, FileInfo *FileInfo, FI
     }
 }
 
+static void PrintModeSelection(void) {
+    printf(YELLOW "В какой режим акинатора вы хотите сыграть: \n"
+                  "1. Поиск объекта, 2. Математическое определение объекта, \n"
+                  "3. Сравнение двух объектов, 4. Показать dump дерева, \n"
+                  "5. Выйти из игры.\n" RESET);
+    system("say \"В какой режим акинатора вы хотите сыграть: "
+           "1. Поиск объекта, 2. Математическое определение объекта, "
+           "3. Сравнение двух объектов, 4. Показать dump дерева, "
+           "5. Выйти из игры.\"");
+}
+
+static TreeErrors DoDefinitionMode(Tree_t *tree, size_t pos) {
+    assert(tree);
+
+    PrintAndSystem("Введите название объекта: \n");
+    
+    DO_CALLOC_AND_CHECK_PROBLEM_RETURN(name, MAX_LINE_SIZE);
+    ReadLine(name);
+    TreeErrors err = DoPrintDefinition(tree->root, name, tree->size, pos);
+    free(name);
+    
+    return err;
+}
+
+static TreeErrors DoCompareMode(Tree_t *tree) {
+    assert(tree);
+
+    PrintAndSystem("Введите названия двух интересующих объектов:\n");
+    
+    DO_CALLOC_AND_CHECK_PROBLEM_RETURN(name1, MAX_LINE_SIZE);
+    DO_CALLOC_AND_CHECK_PROBLEM_RETURN(name2, MAX_LINE_SIZE);
+    
+    int result = scanf("%s %s", name1, name2);
+    getchar();
+    
+    TreeErrors err = kSuccess;
+    if (result < 2) {
+        err = kFailure;
+    } else {
+        err = CompareNames(tree->root, name1, name2);
+    }
+    
+    free(name1);
+    free(name2);
+    return err;
+}
+
 TreeErrors DoDifferentAkinatorModes(Tree_t *tree, DumpInfo *Info, size_t pos) {
     assert(tree);
     assert(Info);
 
     TreeErrors err = kSuccess;
-    printf(YELLOW "В какой режим акинатора вы хотите сыграть: \n1. Поиск объекта, 2. Математическое определение объекта, 3. Сравнение двух объектов\n" RESET);
-    
-    int number = 0;
-    scanf("%d", &number);
-    getchar();
+    AkinatorModes number = kSearch;
 
-    switch (number) {
-    case (1):
-        CHECK_ERROR_RETURN(Akinator(tree, tree->root, Info));
-        return kSuccess;
-    case (2): {
-        printf("Введите название объекта: \n");
-        DO_CALLOC_AND_CHECK_PROBLEM_RETURN(name, MAX_LINE_SIZE);
-        ReadLine(name);
-        CHECK_ERROR_RETURN(DoPrintDefinition(tree->root, name, tree->size, pos));
-        free(name);
-        return kSuccess;
-    }
-    case (3): {
-        printf("Введите названия двух интересующих объектов:\n");
-        DO_CALLOC_AND_CHECK_PROBLEM_RETURN(name1, MAX_LINE_SIZE);
-        DO_CALLOC_AND_CHECK_PROBLEM_RETURN(name2, MAX_LINE_SIZE);
-        int result = scanf("%s %s", name1, name2);
+    TypeOfAnswer play_again_flag = kDo;
+    while (play_again_flag == kDo) {
+        PrintModeSelection();
+        scanf("%d", &number);
         getchar();
-        if (result < 2) {
+
+        switch (number) {
+        case (kSearch):
+            CHECK_ERROR_RETURN(Akinator(tree, tree->root, Info));
+            break;
+        case (kDefinition): {
+            DoDefinitionMode(tree, pos);
+            break;
+        }
+        case (kCompare): {
+            CHECK_ERROR_RETURN(DoCompareMode(tree));
+            break;
+        } 
+        case (kShowDump):
+            DoTreeInGraphviz(tree->root, Info, tree->root);
+            DoDump(Info);
+
+        case (kQuit):
+            play_again_flag = kDoNot;
+            PrintAndSystem("Cпасибо за игру, до скорых встреч!!!!!");
+            return kSuccess;
+        default:
+            fprintf(stderr, "No such mode.");
             return kFailure;
         }
-        CHECK_ERROR_RETURN(CompareNames(tree->root, name1, name2));
-        free(name1);
-        free(name2);
-        return kSuccess;
     } 
-    default:
-        fprintf(stderr, "No such mode.");
-        return kFailure;
-    }
+    return kSuccess;
 }

@@ -60,4 +60,12 @@ enum Realloc_Mode {
     kIncreaseZero,
 };
 
+enum AkinatorModes {
+    kSearch = 1,
+    kDefinition = 2,
+    kCompare = 3,
+    kShowDump = 4,
+    kQuit = 5,
+};
+
 #endif //ENUMS_H_
