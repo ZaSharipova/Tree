@@ -1,6 +1,10 @@
+#include <pthread.h>
 #include "SDL.h"
 #include "SDL_image.h"
-#include "gifdec.h"
+#include "gifdec.h" // - декодирует гиф покадровов
+
+#include <sys/types.h>
+#include <unistd.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,6 +14,11 @@
 int ShowImage(const char *filename) {
     assert(filename);
 
+    // pid_t pid = fork();
+    // if (pid == 0) {
+    //     fprintf(stderr, "Error making new fork.");
+    // }
+
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
         fprintf(stderr, "SDL_Init error: %s\n", SDL_GetError());
         return 1;
@@ -17,7 +26,7 @@ int ShowImage(const char *filename) {
 
     const char *ext = strrchr(filename, '.');
     if (!ext) {
-        fprintf(stderr, "File has no extension\n");
+        fprintf(stderr, "File has no extension.\n");
         SDL_Quit();
         return 1;
     }
@@ -29,7 +38,7 @@ int ShowImage(const char *filename) {
             return 1;
         }
 
-        SDL_Surface *img = IMG_Load(filename);
+        SDL_Surface *img = IMG_Load(filename); // - картинку в память
         if (!img) {
             fprintf(stderr, "IMG_Load error: %s\n", IMG_GetError());
             IMG_Quit();
@@ -39,8 +48,8 @@ int ShowImage(const char *filename) {
 
         SDL_Window* window = SDL_CreateWindow("Image", 0, 0,
             img->w, img->h, SDL_WINDOW_SHOWN);
-        SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-        SDL_Texture *tex = SDL_CreateTextureFromSurface(renderer, img);
+        SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC); // - рисует внутри окна
+        SDL_Texture *tex = SDL_CreateTextureFromSurface(renderer, img); // - картинка, готовая к выходу на экран
         SDL_FreeSurface(img);
 
         SDL_Event e = {};
@@ -67,7 +76,7 @@ int ShowImage(const char *filename) {
     }
 
 
-    gd_GIF *gif = gd_open_gif(filename);
+    gd_GIF *gif = gd_open_gif(filename); // - выгружаем гиф
     if (!gif) {
         fprintf(stderr, "Failed to open GIF\n");
         SDL_Quit();
@@ -76,12 +85,12 @@ int ShowImage(const char *filename) {
 
     SDL_Window *window = SDL_CreateWindow("GIF Viewer", 0, 0,
         gif->width, gif->height, SDL_WINDOW_SHOWN);
-    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
     SDL_Texture *tex = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING,
         gif->width, gif->height);
 
-    uint8_t *frame = (uint8_t *)malloc(gif->width * gif->height * 3);
+    uint8_t *frame = (uint8_t *) calloc (gif->width * gif->height * 3, 1);
     if (!frame) {
         fprintf(stderr, "Failed to allocate memory for GIF frame\n");
         gd_close_gif(gif);
@@ -138,4 +147,12 @@ int ShowImage(const char *filename) {
     SDL_Quit();
 
     return 0; 
+}
+
+void *ShowImageThread(void *arg) {
+    assert(arg);
+
+    const char *filename = (const char*)arg;
+    ShowImage(filename);
+    return NULL;
 }

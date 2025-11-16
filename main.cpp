@@ -38,8 +38,11 @@ int main(void) {
     // DoTreeInGraphviz(tree.root, &Info, tree.root);
     CHECK_ERROR_RETURN(DoDifferentAkinatorModes(&tree, &Info, (size_t)pos));
 
-    DO_OPEN_FILE_RETURN(file_out, "akinator_out.txt", "w");
-    PrintAkinatorToFile(file_out, tree.root);
+    DO_OPEN_FILE_RETURN(file_out, "akinator_out.txt", "rw");
+
+    AskAndPrintAkinatorToFile(file_out, tree.root);
+    //DO_CALLOC_AND_CHECK_PROBLEM_RETURN(cmd, MAX_PHRASE_SIZE);
+    PRINT_AND_SYSTEM("Cпасибо за игру, до скорых встреч!!!!!");
     fclose(file_out);
 
     CHECK_ERROR_RETURN(TreeDtor(&tree, FileInfo.buf_ptr, pos));
