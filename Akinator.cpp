@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "Enums.h"
 #include "Structs.h"
@@ -14,6 +15,7 @@
 #include "ReadTree.h"
 
 #include "ShowGraphics/ShowImageAndGif.h"
+#include "ShowGraphics/GifControl.h"
 
 #define MAX_LINE_SIZE 30
 #define MAX_LINE_SPECIFIER "29"
@@ -30,11 +32,11 @@
     }
 
 
-#define PRINT_AND_STRCAT(buffer, format, ...) do { \
+#define PRINT_AND_STRCAT(buffer, format, ...) do {                             \
     printf(format, ##__VA_ARGS__);                                             \
     fflush(stdout);                                                            \
     DO_CALLOC_AND_CHECK_PROBLEM_RETURN(cmd, MAX_PHRASE_SIZE * 4);              \
-    snprintf(cmd, MAX_PHRASE_SIZE * 4, format, ##__VA_ARGS__);   \
+    snprintf(cmd, MAX_PHRASE_SIZE * 4, format, ##__VA_ARGS__);                 \
     strcat(buffer, cmd);                                                       \
  }while(0)
 
@@ -97,14 +99,20 @@ static TypeOfAnswer AskIfGuessed(const char *question) {
     assert(question);
 
     printf(YELLOW "\nЭто %s? (" YES_ANSWER"/" NO_ANSWER"):\n" RESET, question);
-    ShowImage("/Users/zarinasharipova/Tree/Videos/IMG_3235.GIF");
+    //ShowImage("/Users/zarinasharipova/Tree/Videos/IMG_3235.GIF");
+    PlayGif("/Users/zarinasharipova/Tree/Videos/IMG_3235.GIF");
+    
 
     char *buf = (char *) calloc (MAX_PHRASE_SIZE, sizeof(char));
     snprintf(buf, MAX_PHRASE_SIZE, "say \"Это %s? (" YES_ANSWER"/" NO_ANSWER"):\"", question);
     system(buf);
     free(buf);
 
-    return AskAndReturnYesNo(YES_ANSWER, NO_ANSWER);
+    TypeOfAnswer ans = AskAndReturnYesNo(YES_ANSWER, NO_ANSWER);
+    sleep(1);
+    StopGif();
+
+    return ans;
 }
 
 static TypeOfAnswer PlayAgain(void) {
@@ -118,15 +126,14 @@ static TreeErrors AddNewCharacter(TreeNode_t *node, Tree_t *tree) {
     assert(node);
     assert(tree);
 
-    printf(BLUE "\nОтветьте тогда, кого Вы загадывали? Введите имя (инициалы, прозвище):\n" RESET);
-    system("say \"Ответьте тогда, кого Вы загадывали? Введите имя (инициалы, прозвище):\"");
-
     DO_CALLOC_AND_CHECK_PROBLEM_RETURN(name, MAX_LINE_SIZE);
     ReadLine(name);
 
     printf(BLUE "\nОтлично! Чем \"%s\" отличается от \"%s\"? Он ... :\n" RESET, name, node->data);
     DO_CALLOC_AND_CHECK_PROBLEM_RETURN(buf, MAX_PHRASE_SIZE);
     snprintf(buf, MAX_PHRASE_SIZE, "say \"Отлично! Чем \"%s\" отличается от \"%s\"? Он ... :\"", name, node->data);
+    system(buf);
+    free(buf);
 
     DO_CALLOC_AND_CHECK_PROBLEM_RETURN(new_question, MAX_LINE_SIZE); 
     ReadLine(new_question);
@@ -146,7 +153,11 @@ static TreeErrors DoCorrectGuess(Tree_t *tree, TreeNode_t **node, DumpInfo *Info
     assert(play_again_flag);
 
     printf(RED "\nОтлично, ответ угадан!\n" RESET);
-    system("say \"Отлично, ответ угадан!\"");
+    PlayGif("/Users/zarinasharipova/Tree/Videos/Hasguessed.GIF");
+    system("afplay \"/Users/zarinasharipova/Tree/Videos/Из леммы 3 параграфа 2.mp3\" && \
+        afplay \"/Users/zarinasharipova/Downloads/Hooray.mp3\"");
+    StopGif();
+
     *play_again_flag = PlayAgain();
     if (*play_again_flag != kWrong) {
         *node = tree->root;
@@ -160,6 +171,14 @@ static TreeErrors DoWrongGuess(Tree_t *tree, TreeNode_t **node, DumpInfo *Info, 
     assert(node);
     assert(Info);
     assert(play_again_flag);
+
+    PlayGif("/Users/zarinasharipova/Tree/Videos/Loose.GIF");    
+    //sleep(2);
+    system("afplay \"/Users/zarinasharipova/Downloads/1763392590651863.m4a\" && \
+        afplay \"/Users/zarinasharipova/Tree/Videos/Ой-ошибка-виноват-исправляюсь.mp3\"");
+    StopGif();
+    printf(BLUE "\nОтветьте тогда, кого Вы загадывали? Введите имя (инициалы, прозвище):\n" RESET);
+    system("say \"Ответьте тогда, кого Вы загадывали? Введите имя (инициалы, прозвище):\"");
 
     AddNewCharacter(*node, tree);
 
@@ -374,7 +393,7 @@ TreeErrors DoPrintDefinition(TreeNode_t *node, const char *value, size_t tree_si
     size_t size_of_command = (buffer_len + strlen(value) + strlen(" - это ") + tree_size * 15) * 4 + 1000; //
     DO_CALLOC_AND_CHECK_PROBLEM_RETURN(definition_str, size_of_command);
 
-    ShowImage("Videos/IMG_3237.GIF");
+    PlayGif("/Users/zarinasharipova/Tree/Videos/Definition.GIF");
     printf("\n==========================================================================\n");
     PRINT_AND_STRCAT(definition_str, "                            Определение объекта         \n");
     //PRINT_AND_STRCAT(definition_str, "Адрес: %p.\nОпределение: ", value, address);
@@ -389,7 +408,8 @@ TreeErrors DoPrintDefinition(TreeNode_t *node, const char *value, size_t tree_si
     DO_CALLOC_AND_CHECK_PROBLEM_RETURN(command, size_of_command);
 
     DoSystemCallForSayCommand(command, size_of_command, definition_str);
-
+    sleep(5);
+    StopGif();
     free(definition_str);
     free(command);
     return kSuccess;
@@ -441,6 +461,7 @@ TreeErrors PrintSameCharacteristics(TreeNode_t *node1, TreeNode_t *node2, Stack_
         }
     }
 
+    printf("1212");
     return kSuccess;
 }
 
@@ -515,7 +536,7 @@ TreeErrors CompareNames(TreeNode_t *head, const char *value1, const char *value2
     TreeNode_t *cur1 = NULL;
     TreeNode_t *cur2 = NULL;
 
-    ShowImage("/Users/zarinasharipova/Tree/Videos/IMG_3239.GIF");
+    PlayGif("/Users/zarinasharipova/Tree/Videos/Gifferences.GIF");
 
     size_t size_of_command = (strlen(value1) + strlen(value2) + strlen(" - это ") + pos * 16) * 4 + 1000; //
 
@@ -526,14 +547,16 @@ TreeErrors CompareNames(TreeNode_t *head, const char *value1, const char *value2
 
     PrintSameCharacteristics(node1, node2, &path1, &path2, &cur1, &cur2, comparation_str);
 
-    PRINT_AND_STRCAT(comparation_str, ",\n\nPазличаются таким образом:\n");
+    PRINT_AND_STRCAT(comparation_str, ",\n\n Различаются таким образом:\n");
     PrintDifferentCharacteristics(cur1, &path1, value1, comparation_str);
     PrintDifferentCharacteristics(cur2, &path2, value2, comparation_str);
     printf(".\n===============================================================\n");
 
     DO_CALLOC_AND_CHECK_PROBLEM_RETURN(command, size_of_command);
     DoSystemCallForSayCommand(command, size_of_command, comparation_str);
-
+    getchar();
+    StopGif();
+    
     StackDtor(&path1, stderr);
     StackDtor(&path2, stderr);
 
@@ -572,10 +595,11 @@ TreeErrors AskAndDoFileRead(Tree_t *tree, DumpInfo *Info, FileInfo *FileInfo, FI
 
     printf(YELLOW "Вы хотите воспользоваться старой базой данных? (да/нет): \n" RESET);
     system("say \"Вы хотите воспользоваться старой базой данных? (да/нет): \" ");
-    ShowImage("/Users/zarinasharipova/Tree/Videos/IMG_3235.GIF");
+    PlayGif("/Users/zarinasharipova/Tree/Videos/IMG_3235.GIF");
 
     TypeOfAnswer type_of_answer = AskAndReturnYesNo(YES_ANSWER, NO_ANSWER);
     
+    StopGif();
     switch (type_of_answer) {
     case (kDo): 
         DoFileAkinatorRead(tree, Info, FileInfo, file_in);
@@ -595,10 +619,12 @@ TreeErrors AskAndDoFileRead(Tree_t *tree, DumpInfo *Info, FileInfo *FileInfo, FI
 }
 
 static void PrintModeSelection(void) {
-    printf(YELLOW "В какой режим акинатора вы хотите сыграть: \n"
+    printf(BLUE "В какой режим акинатора вы хотите сыграть: \n" RESET);
+    printf(MAGENTA
                   "1. Поиск объекта, 2. Математическое определение объекта, \n"
                   "3. Сравнение двух объектов, 4. Показать dump дерева, \n"
                   "5. Выйти из игры.\n" RESET);
+    system("say \"В какой режим акинатора вы хотите сыграть?\"");
     // system("say \"В какой режим акинатора вы хотите сыграть: "
     //        "1. Поиск объекта, 2. Математическое определение объекта, "
     //        "3. Сравнение двух объектов, 4. Показать dump дерева, "
@@ -684,14 +710,21 @@ TreeErrors AskAndPrintAkinatorToFile(FILE *file_out, TreeNode_t *head) {
     assert(file_out);
     assert(head);
 
-    printf(GREEN "Answer, if you want to save tree to the file or not: (" YES_ANSWER"/" NO_ANSWER")\n" RESET);
+    printf(GREEN "Вы хотите сохранить полученные изменения? (" YES_ANSWER"/" NO_ANSWER")\n" RESET);
+    system("say \"Вы хотите сохранить полученные изменения? (" YES_ANSWER"/" NO_ANSWER") \"");
+    PlayGif("/Users/zarinasharipova/Tree/Videos/CleanAll.GIF");
     TypeOfAnswer type_of_answer = kDo;
     AskAndReturnYesNo(YES_ANSWER, NO_ANSWER);
     if (type_of_answer == kDo) {
         PrintAkinatorToFile(file_out, head);
     } else if (type_of_answer == kDoNot) {
+        sleep(2);
+        StopGif();
         return kSuccess;
     }
+
+    sleep(2);
+    StopGif();
 
     return kSuccess;
 

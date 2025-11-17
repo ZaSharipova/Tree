@@ -10,8 +10,13 @@
 #include "Akinator.h"
 #include "ReadTree.h"
 
-int main(void) {
+#include "ShowGraphics/GifControl.h"
 
+int main(void) {
+    PlayGif("/Users/zarinasharipova/Tree/Videos/FallingFromKPM.GIF");
+    system("afplay /Users/zarinasharipova/Tree/Videos/Заставка.mp3");
+    StopGif();
+    
     Tree_t tree = {};
     TreeErrors err = kSuccess;
     CHECK_ERROR_RETURN(TreeRootCtor(&tree));
@@ -41,9 +46,12 @@ int main(void) {
     DO_OPEN_FILE_RETURN(file_out, "akinator_out.txt", "rw");
 
     AskAndPrintAkinatorToFile(file_out, tree.root);
-    //DO_CALLOC_AND_CHECK_PROBLEM_RETURN(cmd, MAX_PHRASE_SIZE);
-    PRINT_AND_SYSTEM("Cпасибо за игру, до скорых встреч!!!!!");
     fclose(file_out);
+    //DO_CALLOC_AND_CHECK_PROBLEM_RETURN(cmd, MAX_PHRASE_SIZE);
+    PlayGif("/Users/zarinasharipova/Tree/Videos/Финал.GIF");
+    system("afplay /Users/zarinasharipova/Tree/Videos/Все-тогда-на-сегодня.mp3");
+    StopGif();
+    printf("Cпасибо за игру, до скорых встреч!!!!!");
 
     CHECK_ERROR_RETURN(TreeDtor(&tree, FileInfo.buf_ptr, pos));
     free(FileInfo.buf_ptr);
