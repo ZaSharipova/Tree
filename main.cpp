@@ -13,9 +13,10 @@
 #include "ShowGraphics/GifControl.h"
 
 int main(void) {
-    PlayGif("/Users/zarinasharipova/Tree/Videos/FallingFromKPM.GIF");
+    PlayGif("/Users/zarinasharipova/Tree/ShowGraphics/ezgif.com-resize.gif");
     system("afplay /Users/zarinasharipova/Tree/Videos/Заставка.mp3");
     StopGif();
+    system("say \"Добро пожаловать в Акинатор!\"");
     
     Tree_t tree = {};
     TreeErrors err = kSuccess;

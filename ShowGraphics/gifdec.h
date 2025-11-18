@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <sys/types.h>
 
+//NOT MINE, BUT DOWNLOADED FROM GITHUB
+
 #ifdef __cplusplus
 extern "C" {
 #endif

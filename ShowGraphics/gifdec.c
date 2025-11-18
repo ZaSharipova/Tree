@@ -13,6 +13,8 @@
 #include <unistd.h>
 #endif
 
+//NOT MINE, BUT DOWNLOADED FROM GITHUB
+
 #define MIN(A, B) ((A) < (B) ? (A) : (B))
 #define MAX(A, B) ((A) > (B) ? (A) : (B))
 

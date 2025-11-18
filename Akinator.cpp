@@ -320,9 +320,10 @@ TreeErrors FindAkinatorNodeAddress(TreeNode_t *node, const char *value, TreeNode
 //     return kSuccess;
 // }
 
-TreeErrors PrintDefinition(TreeNode_t *current, char *definition_str) {
+TreeErrors PrintDefinition(TreeNode_t *current, char *definition_str, const char *value) {
     assert(current);
     assert(definition_str);
+    assert(value);
 
     Stack_Info path = {};
     size_t pos_in_phrases = 0;
@@ -339,7 +340,7 @@ TreeErrors PrintDefinition(TreeNode_t *current, char *definition_str) {
     TreeNode_t *node = {};
     StackPop(&path, &prev_node, stderr);
 
-    PRINT_AND_STRCAT(definition_str, "Зарина - это ");
+    PRINT_AND_STRCAT(definition_str, "%s - это ", value);
 
     while (path.size >= 1) {
         StackPop(&path, &node, stderr);
@@ -400,7 +401,7 @@ TreeErrors DoPrintDefinition(TreeNode_t *node, const char *value, size_t tree_si
 
 
     if (address->parent) {
-        PrintDefinition(address, definition_str);
+        PrintDefinition(address, definition_str, value);
     }
 
     printf("\n==========================================================================\n");
@@ -547,7 +548,7 @@ TreeErrors CompareNames(TreeNode_t *head, const char *value1, const char *value2
 
     PrintSameCharacteristics(node1, node2, &path1, &path2, &cur1, &cur2, comparation_str);
 
-    PRINT_AND_STRCAT(comparation_str, ",\n\n Различаются таким образом:\n");
+    PRINT_AND_STRCAT(comparation_str, "\nРазличаются таким образом:");
     PrintDifferentCharacteristics(cur1, &path1, value1, comparation_str);
     PrintDifferentCharacteristics(cur2, &path2, value2, comparation_str);
     printf(".\n===============================================================\n");
